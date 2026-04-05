@@ -405,7 +405,6 @@ export const getAuthenticatedUserId = cache(async () => {
     role: localUser.role,
   });
 
-  await applyUserPreferenceCookies(miniAuthIdentity);
   return localUser.id;
 });
 
