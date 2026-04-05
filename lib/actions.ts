@@ -85,9 +85,12 @@ const createAssetSchema = z
     assetCode: z.string().trim().min(2).max(32),
     nameEn: z.string().trim().max(120).optional(),
     nameZh: z.string().trim().max(120).optional(),
-    color: z.string().trim().max(80).optional(),
+    primaryColor: z.string().trim().max(80).optional(),
+    secondaryColor: z.string().trim().max(80).optional(),
     brand: z.string().trim().max(80).optional(),
     model: z.string().trim().max(80).optional(),
+    variant: z.string().trim().max(80).optional(),
+    subvariant: z.string().trim().max(80).optional(),
     description: z.string().trim().max(1000).optional(),
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
@@ -110,9 +113,12 @@ const updateAssetSchema = z
     assetCode: z.string().trim().min(2).max(32),
     nameEn: z.string().trim().max(120).optional(),
     nameZh: z.string().trim().max(120).optional(),
-    color: z.string().trim().max(80).optional(),
+    primaryColor: z.string().trim().max(80).optional(),
+    secondaryColor: z.string().trim().max(80).optional(),
     brand: z.string().trim().max(80).optional(),
     model: z.string().trim().max(80).optional(),
+    variant: z.string().trim().max(80).optional(),
+    subvariant: z.string().trim().max(80).optional(),
     description: z.string().trim().max(1000).optional(),
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
@@ -139,6 +145,85 @@ function revalidateWorkspaceViews() {
   revalidatePath("/locations");
   revalidatePath("/dashboard");
   revalidatePath("/assets");
+}
+
+function collapseWhitespace(value: string | undefined) {
+  return value?.replace(/\s+/g, " ").trim() || "";
+}
+
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function normalizeColorValue(value: string | undefined) {
+  const collapsed = collapseWhitespace(value);
+  return collapsed ? toTitleCase(collapsed) : "";
+}
+
+function normalizeDescriptorValue(value: string | undefined) {
+  const collapsed = collapseWhitespace(value);
+  return collapsed ? toTitleCase(collapsed) : "";
+}
+
+async function canonicalizeWorkspaceValue(
+  workspaceId: string,
+  field: "brand" | "model" | "variant" | "subvariant" | "barcodeSource",
+  value: string | undefined,
+) {
+  const collapsed = collapseWhitespace(value);
+  if (!collapsed) {
+    return "";
+  }
+
+  const existingValues = await prisma.asset.findMany({
+    where: { workspaceId },
+    select: {
+      brand: true,
+      model: true,
+      variant: true,
+      subvariant: true,
+      barcodeSource: true,
+    },
+  });
+
+  const canonicalMatch = existingValues.find((item) => {
+    const current =
+      field === "brand"
+        ? item.brand
+        : field === "model"
+          ? item.model
+          : field === "variant"
+            ? item.variant
+            : field === "subvariant"
+              ? item.subvariant
+              : item.barcodeSource;
+    return typeof current === "string" && current.trim().toLowerCase() === collapsed.toLowerCase();
+  });
+
+  const canonical =
+    field === "brand"
+      ? canonicalMatch?.brand
+      : field === "model"
+        ? canonicalMatch?.model
+        : field === "variant"
+          ? canonicalMatch?.variant
+          : field === "subvariant"
+            ? canonicalMatch?.subvariant
+            : canonicalMatch?.barcodeSource;
+  if (typeof canonical === "string" && canonical.trim()) {
+    return canonical.trim();
+  }
+
+  if (field === "brand" || field === "variant" || field === "subvariant") {
+    return toTitleCase(collapsed);
+  }
+
+  return collapsed;
 }
 
 export async function switchWorkspaceAction(formData: FormData) {
@@ -428,9 +513,12 @@ export async function createAssetAction(formData: FormData) {
     assetCode: formData.get("assetCode"),
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
-    color: formData.get("color") || undefined,
+    primaryColor: formData.get("primaryColor") || undefined,
+    secondaryColor: formData.get("secondaryColor") || undefined,
     brand: formData.get("brand") || undefined,
     model: formData.get("model") || undefined,
+    variant: formData.get("variant") || undefined,
+    subvariant: formData.get("subvariant") || undefined,
     description: formData.get("description") || undefined,
     barcodeValue: formData.get("barcodeValue") || undefined,
     barcodeFormat: formData.get("barcodeFormat") || undefined,
@@ -446,6 +534,16 @@ export async function createAssetAction(formData: FormData) {
     throw new Error("Workspace access denied.");
   }
 
+  const primaryColor = normalizeColorValue(parsed.primaryColor);
+  const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const [brand, model, variant, subvariant, barcodeSource] = await Promise.all([
+    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", parsed.variant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", parsed.subvariant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "barcodeSource", parsed.barcodeSource),
+  ]);
+
   const asset = await prisma.asset.create({
     data: {
       workspaceId: parsed.workspaceId,
@@ -454,13 +552,17 @@ export async function createAssetAction(formData: FormData) {
       assetCode: parsed.assetCode.toUpperCase(),
       nameEn: parsed.nameEn || null,
       nameZh: parsed.nameZh || null,
-      color: parsed.color || null,
-      brand: parsed.brand || null,
-      model: parsed.model || null,
+      color: primaryColor || null,
+      primaryColor: primaryColor || null,
+      secondaryColor: secondaryColor || null,
+      brand: brand || null,
+      model: model || null,
+      variant: variant || null,
+      subvariant: subvariant || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,
-      barcodeSource: parsed.barcodeSource || (parsed.barcodeValue ? "manual" : null),
+      barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual" : null),
       quantity: parsed.quantity,
       trackingMode: parsed.trackingMode,
       sensitivityLevel: parsed.sensitivityLevel,
@@ -491,9 +593,12 @@ export async function updateAssetAction(formData: FormData) {
     assetCode: formData.get("assetCode"),
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
-    color: formData.get("color") || undefined,
+    primaryColor: formData.get("primaryColor") || undefined,
+    secondaryColor: formData.get("secondaryColor") || undefined,
     brand: formData.get("brand") || undefined,
     model: formData.get("model") || undefined,
+    variant: formData.get("variant") || undefined,
+    subvariant: formData.get("subvariant") || undefined,
     description: formData.get("description") || undefined,
     barcodeValue: formData.get("barcodeValue") || undefined,
     barcodeFormat: formData.get("barcodeFormat") || undefined,
@@ -518,6 +623,16 @@ export async function updateAssetAction(formData: FormData) {
     throw new Error("Asset not found.");
   }
 
+  const primaryColor = normalizeColorValue(parsed.primaryColor);
+  const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const [brand, model, variant, subvariant, barcodeSource] = await Promise.all([
+    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", parsed.variant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", parsed.subvariant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "barcodeSource", parsed.barcodeSource),
+  ]);
+
   await prisma.asset.update({
     where: { id: parsed.assetId },
     data: {
@@ -525,13 +640,17 @@ export async function updateAssetAction(formData: FormData) {
       assetCode: parsed.assetCode.toUpperCase(),
       nameEn: parsed.nameEn || null,
       nameZh: parsed.nameZh || null,
-      color: parsed.color || null,
-      brand: parsed.brand || null,
-      model: parsed.model || null,
+      color: primaryColor || null,
+      primaryColor: primaryColor || null,
+      secondaryColor: secondaryColor || null,
+      brand: brand || null,
+      model: model || null,
+      variant: variant || null,
+      subvariant: subvariant || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,
-      barcodeSource: parsed.barcodeSource || (parsed.barcodeValue ? "manual-or-scan" : null),
+      barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual-or-scan" : null),
       quantity: parsed.quantity,
       trackingMode: parsed.trackingMode,
       sensitivityLevel: parsed.sensitivityLevel,

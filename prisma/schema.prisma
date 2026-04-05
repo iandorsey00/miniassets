@@ -185,8 +185,12 @@ model Asset {
   nameEn            String?
   nameZh            String?
   color             String?
+  primaryColor      String?
+  secondaryColor    String?
   brand             String?
   model             String?
+  variant           String?
+  subvariant        String?
   description       String?
   barcodeValue      String?
   barcodeFormat     String?

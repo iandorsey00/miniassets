@@ -1,7 +1,7 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { PageHeader, Panel } from "@/components/ui";
 import { createAssetAction } from "@/lib/actions";
-import { locationKindLabels, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
+import { commonColorValues, locationKindLabels, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
 import { getLocationsData } from "@/lib/data";
 
 export default async function NewAssetPage({
@@ -69,18 +69,33 @@ export default async function NewAssetPage({
             </div>
 
             <div className="field-stack">
-              <label htmlFor="color">{data.dictionary.common.color}</label>
-              <input id="color" name="color" />
+              <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
+              <input id="primaryColor" name="primaryColor" list="primaryColorSuggestions" />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
+              <input id="secondaryColor" name="secondaryColor" list="secondaryColorSuggestions" />
             </div>
 
             <div className="field-stack">
               <label htmlFor="brand">{data.dictionary.common.brand}</label>
-              <input id="brand" name="brand" />
+              <input id="brand" name="brand" list="brandSuggestions" />
             </div>
 
             <div className="field-stack">
               <label htmlFor="model">{data.dictionary.common.model}</label>
-              <input id="model" name="model" />
+              <input id="model" name="model" list="modelSuggestions" />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="variant">{data.dictionary.common.variant}</label>
+              <input id="variant" name="variant" list="variantSuggestions" />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="subvariant">{data.dictionary.common.subvariant}</label>
+              <input id="subvariant" name="subvariant" list="subvariantSuggestions" />
             </div>
 
             <div className="field-stack">
@@ -122,7 +137,7 @@ export default async function NewAssetPage({
 
             <div className="field-stack">
               <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
-              <input id="barcodeSource" name="barcodeSource" defaultValue="manual-or-scan" />
+              <input id="barcodeSource" name="barcodeSource" list="barcodeSourceSuggestions" defaultValue="manual-or-scan" />
             </div>
 
             <div className="field-stack full-span">
@@ -139,6 +154,42 @@ export default async function NewAssetPage({
               <button type="submit">{data.dictionary.common.create}</button>
             </div>
           </form>
+
+          <datalist id="primaryColorSuggestions">
+            {Array.from(new Set([...commonColorValues, ...data.assetFieldSuggestions.primaryColors])).map((value) => (
+              <option key={`primary-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="secondaryColorSuggestions">
+            {Array.from(new Set([...commonColorValues, ...data.assetFieldSuggestions.secondaryColors])).map((value) => (
+              <option key={`secondary-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="brandSuggestions">
+            {data.assetFieldSuggestions.brands.map((value) => (
+              <option key={`brand-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="modelSuggestions">
+            {data.assetFieldSuggestions.models.map((value) => (
+              <option key={`model-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="variantSuggestions">
+            {data.assetFieldSuggestions.variants.map((value) => (
+              <option key={`variant-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="subvariantSuggestions">
+            {data.assetFieldSuggestions.subvariants.map((value) => (
+              <option key={`subvariant-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="barcodeSourceSuggestions">
+            {data.assetFieldSuggestions.barcodeSources.map((value) => (
+              <option key={`barcode-source-${value}`} value={value} />
+            ))}
+          </datalist>
         </Panel>
       </div>
     </>

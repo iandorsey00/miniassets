@@ -35,16 +35,24 @@ export function formatAssetLabel(
     nameEn?: string | null;
     nameZh?: string | null;
     color?: string | null;
+    primaryColor?: string | null;
+    secondaryColor?: string | null;
     brand?: string | null;
     model?: string | null;
+    variant?: string | null;
+    subvariant?: string | null;
     assetCode?: string | null;
   },
   options?: { includeModel?: boolean },
 ) {
+  const primaryColor = values.primaryColor?.trim() || values.color?.trim() || "";
   const segments = [
     pickLocalizedText(locale, values),
-    values.color?.trim() || "",
+    primaryColor,
+    values.secondaryColor?.trim() || "",
     values.brand?.trim() || "",
+    values.variant?.trim() || "",
+    values.subvariant?.trim() || "",
     options?.includeModel ? values.model?.trim() || "" : "",
   ].filter(Boolean);
 

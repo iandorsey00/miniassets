@@ -33,6 +33,7 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint, labels }: Barcod
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetectorLike | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const [active, setActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
@@ -42,8 +43,40 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint, labels }: Barcod
       for (const track of streamRef.current?.getTracks() ?? []) {
         track.stop();
       }
+      void audioContextRef.current?.close();
     };
   }, []);
+
+  async function playSuccessTone() {
+    const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) {
+      return;
+    }
+
+    const audioContext = audioContextRef.current ?? new AudioContextCtor();
+    audioContextRef.current = audioContext;
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    const now = audioContext.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, now);
+    oscillator.frequency.linearRampToValueAtTime(1174, now + 0.08);
+
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.16);
+  }
 
   async function startScanner() {
     setError(null);
@@ -92,6 +125,8 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint, labels }: Barcod
       const results = await detectorRef.current.detect(videoRef.current);
       const first = results[0];
       if (first?.rawValue) {
+        await playSuccessTone();
+
         const barcodeInput = document.getElementById(targetInputId) as HTMLInputElement | null;
         if (barcodeInput) {
           barcodeInput.value = first.rawValue;
@@ -100,6 +135,11 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint, labels }: Barcod
         const formatInput = document.getElementById("barcodeFormat") as HTMLInputElement | null;
         if (formatInput) {
           formatInput.value = first.format || "";
+        }
+
+        const sourceInput = document.getElementById("barcodeSource") as HTMLInputElement | null;
+        if (sourceInput && !sourceInput.value) {
+          sourceInput.value = "scan";
         }
 
         stopScanner();

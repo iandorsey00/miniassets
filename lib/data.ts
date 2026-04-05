@@ -113,6 +113,45 @@ export function buildLocationPath<
   return segments.join(" > ");
 }
 
+function normalizeSuggestionValue(value: string | null | undefined) {
+  return value?.trim() || "";
+}
+
+function uniqueSorted(values: Array<string | null | undefined>) {
+  const normalized = values
+    .map(normalizeSuggestionValue)
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
+
+  return [...new Set(normalized)];
+}
+
+async function getAssetFieldSuggestions(workspaceId: string) {
+  const assets = await prisma.asset.findMany({
+    where: { workspaceId },
+    select: {
+      color: true,
+      primaryColor: true,
+      secondaryColor: true,
+      brand: true,
+      model: true,
+      variant: true,
+      subvariant: true,
+      barcodeSource: true,
+    },
+  });
+
+  return {
+    primaryColors: uniqueSorted(assets.flatMap((asset) => [asset.primaryColor, asset.color])),
+    secondaryColors: uniqueSorted(assets.map((asset) => asset.secondaryColor)),
+    brands: uniqueSorted(assets.map((asset) => asset.brand)),
+    models: uniqueSorted(assets.map((asset) => asset.model)),
+    variants: uniqueSorted(assets.map((asset) => asset.variant)),
+    subvariants: uniqueSorted(assets.map((asset) => asset.subvariant)),
+    barcodeSources: uniqueSorted(assets.map((asset) => asset.barcodeSource)),
+  };
+}
+
 export async function getDashboardData(workspaceId?: string) {
   const context = await getViewerContext(workspaceId);
   if (!context.currentWorkspace) {
@@ -190,8 +229,13 @@ export async function getAssetsData(filters: {
           { nameEn: { contains: filters.q } },
           { nameZh: { contains: filters.q } },
           { barcodeValue: { contains: filters.q } },
+          { color: { contains: filters.q } },
+          { primaryColor: { contains: filters.q } },
+          { secondaryColor: { contains: filters.q } },
           { brand: { contains: filters.q } },
           { model: { contains: filters.q } },
+          { variant: { contains: filters.q } },
+          { subvariant: { contains: filters.q } },
         ]
       : undefined,
   };
@@ -232,33 +276,49 @@ export async function getAssetDetail(assetId: string) {
   });
 
   if (!asset) {
-    return { ...context, asset: null, locations: [], locationPath: "" };
+    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null };
   }
 
   if (!context.accessibleWorkspaceIds.includes(asset.workspaceId)) {
-    return { ...context, asset: null, locations: [], locationPath: "" };
+    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null };
   }
 
-  const locations = await prisma.locationNode.findMany({
-    where: { workspaceId: asset.workspaceId },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
+  const [locations, assetFieldSuggestions] = await Promise.all([
+    prisma.locationNode.findMany({
+      where: { workspaceId: asset.workspaceId },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    getAssetFieldSuggestions(asset.workspaceId),
+  ]);
 
   const locationPath =
     asset.currentLocationId && locations.length
       ? buildLocationPath(locations, asset.currentLocationId, context.locale)
       : "";
 
-  return { ...context, asset, locations, locationPath };
+  return { ...context, asset, locations, locationPath, assetFieldSuggestions };
 }
 
 export async function getLocationsData(workspaceId?: string) {
   const context = await getViewerContext(workspaceId);
   if (!context.currentWorkspace) {
-    return { ...context, locations: [], assetCounts: new Map<string, number>() };
+    return {
+      ...context,
+      locations: [],
+      assetCounts: new Map<string, number>(),
+      assetFieldSuggestions: {
+        primaryColors: [],
+        secondaryColors: [],
+        brands: [],
+        models: [],
+        variants: [],
+        subvariants: [],
+        barcodeSources: [],
+      },
+    };
   }
 
-  const [locations, counts] = await Promise.all([
+  const [locations, counts, assetFieldSuggestions] = await Promise.all([
     prisma.locationNode.findMany({
       where: { workspaceId: context.currentWorkspace.id },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
@@ -287,11 +347,13 @@ export async function getLocationsData(workspaceId?: string) {
       },
       _count: { _all: true },
     }),
+    getAssetFieldSuggestions(context.currentWorkspace.id),
   ]);
 
   return {
     ...context,
     locations,
+    assetFieldSuggestions,
     assetCounts: new Map(
       counts
         .filter((item) => item.currentLocationId)
@@ -385,8 +447,12 @@ export async function exportWorkspaceData(workspaceId?: string) {
       nameEn: asset.nameEn,
       nameZh: asset.nameZh,
       color: asset.color,
+      primaryColor: asset.primaryColor ?? asset.color,
+      secondaryColor: asset.secondaryColor,
       brand: asset.brand,
       model: asset.model,
+      variant: asset.variant,
+      subvariant: asset.subvariant,
       description: asset.description,
       barcodeValue: asset.barcodeValue,
       barcodeFormat: asset.barcodeFormat,

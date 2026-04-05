@@ -1,7 +1,13 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
 import { moveAssetAction, updateAssetAction } from "@/lib/actions";
-import { assetStatusLabels, placementConfidenceLabels, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
+import {
+  assetStatusLabels,
+  commonColorValues,
+  placementConfidenceLabels,
+  sensitivityLabels,
+  trackingModeLabels,
+} from "@/lib/constants";
 import { buildLocationPath, getAssetDetail, movementTone } from "@/lib/data";
 import { formatAssetLabel, formatDateTime } from "@/lib/present";
 
@@ -16,6 +22,16 @@ export default async function AssetDetailPage({
   if (!data.asset) {
     return <EmptyState title={data.dictionary.assets.notFound} />;
   }
+
+  const suggestions = data.assetFieldSuggestions ?? {
+    primaryColors: [],
+    secondaryColors: [],
+    brands: [],
+    models: [],
+    variants: [],
+    subvariants: [],
+    barcodeSources: [],
+  };
 
   return (
     <>
@@ -58,8 +74,12 @@ export default async function AssetDetailPage({
               <span>{formatDateTime(data.asset.lastVerifiedAt, data.localeCode)}</span>
             </div>
             <div className="split-line">
-              <span>{data.dictionary.common.color}</span>
-              <span>{data.asset.color || "-"}</span>
+              <span>{data.dictionary.common.primaryColor}</span>
+              <span>{data.asset.primaryColor || data.asset.color || "-"}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.secondaryColor}</span>
+              <span>{data.asset.secondaryColor || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.brand}</span>
@@ -68,6 +88,14 @@ export default async function AssetDetailPage({
             <div className="split-line">
               <span>{data.dictionary.common.model}</span>
               <span>{data.asset.model || "-"}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.variant}</span>
+              <span>{data.asset.variant || "-"}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.subvariant}</span>
+              <span>{data.asset.subvariant || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.barcode}</span>
@@ -197,18 +225,48 @@ export default async function AssetDetailPage({
             </div>
 
             <div className="field-stack">
-              <label htmlFor="color">{data.dictionary.common.color}</label>
-              <input id="color" name="color" defaultValue={data.asset.color ?? ""} />
+              <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
+              <input
+                id="primaryColor"
+                name="primaryColor"
+                list="primaryColorSuggestions"
+                defaultValue={data.asset.primaryColor ?? data.asset.color ?? ""}
+              />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
+              <input
+                id="secondaryColor"
+                name="secondaryColor"
+                list="secondaryColorSuggestions"
+                defaultValue={data.asset.secondaryColor ?? ""}
+              />
             </div>
 
             <div className="field-stack">
               <label htmlFor="brand">{data.dictionary.common.brand}</label>
-              <input id="brand" name="brand" defaultValue={data.asset.brand ?? ""} />
+              <input id="brand" name="brand" list="brandSuggestions" defaultValue={data.asset.brand ?? ""} />
             </div>
 
             <div className="field-stack">
               <label htmlFor="model">{data.dictionary.common.model}</label>
-              <input id="model" name="model" defaultValue={data.asset.model ?? ""} />
+              <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="variant">{data.dictionary.common.variant}</label>
+              <input id="variant" name="variant" list="variantSuggestions" defaultValue={data.asset.variant ?? ""} />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="subvariant">{data.dictionary.common.subvariant}</label>
+              <input
+                id="subvariant"
+                name="subvariant"
+                list="subvariantSuggestions"
+                defaultValue={data.asset.subvariant ?? ""}
+              />
             </div>
 
             <div className="field-stack">
@@ -223,7 +281,12 @@ export default async function AssetDetailPage({
 
             <div className="field-stack">
               <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
-              <input id="barcodeSource" name="barcodeSource" defaultValue={data.asset.barcodeSource ?? ""} />
+              <input
+                id="barcodeSource"
+                name="barcodeSource"
+                list="barcodeSourceSuggestions"
+                defaultValue={data.asset.barcodeSource ?? ""}
+              />
             </div>
 
             <div className="field-stack">
@@ -268,6 +331,41 @@ export default async function AssetDetailPage({
             </div>
           </form>
         </div>
+        <datalist id="primaryColorSuggestions">
+          {Array.from(new Set([...commonColorValues, ...suggestions.primaryColors])).map((value) => (
+            <option key={`primary-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="secondaryColorSuggestions">
+          {Array.from(new Set([...commonColorValues, ...suggestions.secondaryColors])).map((value) => (
+            <option key={`secondary-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="brandSuggestions">
+          {suggestions.brands.map((value) => (
+            <option key={`brand-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="modelSuggestions">
+          {suggestions.models.map((value) => (
+            <option key={`model-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="variantSuggestions">
+          {suggestions.variants.map((value) => (
+            <option key={`variant-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="subvariantSuggestions">
+          {suggestions.subvariants.map((value) => (
+            <option key={`subvariant-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="barcodeSourceSuggestions">
+          {suggestions.barcodeSources.map((value) => (
+            <option key={`barcode-source-${value}`} value={value} />
+          ))}
+        </datalist>
       </Panel>
 
       <Panel title={data.dictionary.assets.movementTitle}>

@@ -110,3 +110,20 @@ export const placementConfidenceLabels = {
   ASSUMED: { zh: "推定", en: "Assumed" },
   REPORTED: { zh: "口头报告", en: "Reported" },
 } as const;
+
+export const commonColorValues = [
+  "Black",
+  "Blue",
+  "Brown",
+  "Clear",
+  "Gold",
+  "Gray",
+  "Green",
+  "Orange",
+  "Pink",
+  "Purple",
+  "Red",
+  "Silver",
+  "White",
+  "Yellow",
+] as const;
