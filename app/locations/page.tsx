@@ -1,7 +1,7 @@
 import { PageHeader, Panel } from "@/components/ui";
-import { createLocationAction } from "@/lib/actions";
+import { createLocationAction, moveLocationAction } from "@/lib/actions";
 import { locationKindLabels } from "@/lib/constants";
-import { getLocationsData } from "@/lib/data";
+import { buildLocationPath, getLocationsData } from "@/lib/data";
 import { pickLocalizedText } from "@/lib/present";
 
 function renderTree(
@@ -95,6 +95,48 @@ export default async function LocationsPage({
 
             <div className="full-span">
               <button type="submit">{data.dictionary.common.create}</button>
+            </div>
+          </form>
+        </Panel>
+
+        <Panel title="Move location">
+          <form action={moveLocationAction} className="form-grid">
+            <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
+
+            <div className="field-stack">
+              <label htmlFor="locationId">Location</label>
+              <select id="locationId" name="locationId" defaultValue="">
+                <option value="" disabled>
+                  Choose a location
+                </option>
+                {data.locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {buildLocationPath(data.locations, location.id, data.locale) ||
+                      pickLocalizedText(data.locale, location) ||
+                      location.code ||
+                      location.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="moveParentId">New parent</label>
+              <select id="moveParentId" name="parentId" defaultValue="">
+                <option value="">Top level</option>
+                {data.locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {buildLocationPath(data.locations, location.id, data.locale) ||
+                      pickLocalizedText(data.locale, location) ||
+                      location.code ||
+                      location.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="full-span">
+              <button type="submit">Move location</button>
             </div>
           </form>
         </Panel>

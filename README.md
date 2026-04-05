@@ -7,6 +7,7 @@ Bilingual household asset management for low-to-medium secrecy items, built arou
 - MiniAuth authentication and shared workspace sync
 - Shared locale, theme, and accent inheritance
 - Standardized household location tree
+- Location reparenting for correcting branch placement mistakes
 - Assets with English and Chinese naming
 - Optional barcode scanning and optional metadata lookup
 - Grouped-item support when per-item detail is unrealistic

@@ -33,6 +33,12 @@ const createLocationSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+const moveLocationSchema = z.object({
+  workspaceId: z.string().min(1),
+  locationId: z.string().min(1),
+  parentId: z.string().optional(),
+});
+
 const createAssetSchema = z
   .object({
     workspaceId: z.string().min(1),
@@ -112,6 +118,73 @@ export async function createLocationAction(formData: FormData) {
 
   revalidatePath("/locations");
   revalidatePath("/dashboard");
+  redirect("/locations");
+}
+
+function collectDescendantIds(
+  locations: Array<{ id: string; parentId: string | null }>,
+  rootId: string,
+) {
+  const descendants = new Set<string>([rootId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const location of locations) {
+      if (location.parentId && descendants.has(location.parentId) && !descendants.has(location.id)) {
+        descendants.add(location.id);
+        changed = true;
+      }
+    }
+  }
+
+  return descendants;
+}
+
+export async function moveLocationAction(formData: FormData) {
+  const parsed = moveLocationSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+    parentId: formData.get("parentId") || undefined,
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const locations = await prisma.locationNode.findMany({
+    where: { workspaceId: parsed.workspaceId },
+    select: { id: true, parentId: true },
+  });
+
+  const location = locations.find((item) => item.id === parsed.locationId);
+  if (!location) {
+    throw new Error("Location not found.");
+  }
+
+  const nextParentId = parsed.parentId || null;
+  if (nextParentId === parsed.locationId) {
+    throw new Error("A location cannot be its own parent.");
+  }
+
+  if (nextParentId) {
+    const descendants = collectDescendantIds(locations, parsed.locationId);
+    if (descendants.has(nextParentId)) {
+      throw new Error("A location cannot be moved under itself or one of its descendants.");
+    }
+  }
+
+  await prisma.locationNode.update({
+    where: { id: parsed.locationId },
+    data: {
+      parentId: nextParentId,
+    },
+  });
+
+  revalidatePath("/locations");
+  revalidatePath("/dashboard");
+  revalidatePath("/assets");
   redirect("/locations");
 }
 
