@@ -110,8 +110,34 @@ textarea {
   border-radius: var(--radius-lg);
 }
 
-.tree-children {
+.tree-node-summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.tree-node-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tree-node-summary::before {
+  content: "+";
+  display: inline-block;
+  width: 1.2rem;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.tree-node[open] > .tree-node-summary::before {
+  content: "−";
+}
+
+.tree-node-body {
   margin-top: 0.85rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.tree-children {
   padding-left: 1rem;
   display: grid;
   gap: 0.85rem;
