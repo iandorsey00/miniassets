@@ -22,6 +22,8 @@ type LocationOption = {
 type LocationCreateFormProps = {
   workspaceId: string;
   locale: "ZH_CN" | "EN";
+  defaultParentId?: string;
+  defaultKind?: LocationKind;
   dictionary: {
     common: {
       englishName: string;
@@ -49,10 +51,12 @@ type LocationCreateFormProps = {
 export function LocationCreateForm({
   workspaceId,
   locale,
+  defaultParentId,
+  defaultKind,
   dictionary,
   locations,
 }: LocationCreateFormProps) {
-  const [parentId, setParentId] = useState("");
+  const [parentId, setParentId] = useState(defaultParentId ?? "");
 
   const parentKind = useMemo(
     () => locations.find((location) => location.id === parentId)?.kind ?? null,
@@ -60,7 +64,7 @@ export function LocationCreateForm({
   );
   const allowedKinds = useMemo(() => getAllowedLocationKinds(parentKind), [parentKind]);
   const allowedKindGroups = useMemo(() => getAllowedLocationKindsByGroup(parentKind), [parentKind]);
-  const [kind, setKind] = useState<LocationKind>("HOUSE");
+  const [kind, setKind] = useState<LocationKind>(defaultKind ?? "HOUSE");
   const selectedKind = allowedKinds.includes(kind) ? kind : (allowedKinds[0] ?? "HOUSE");
   const [positionPreset, setPositionPreset] = useState<(typeof positionPresetValues)[number]>("TOP");
 

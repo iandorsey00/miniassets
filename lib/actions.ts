@@ -85,6 +85,11 @@ const deleteLocationDescriptorSchema = z.object({
   descriptorId: z.string().min(1),
 });
 
+const deleteLocationSchema = z.object({
+  workspaceId: z.string().min(1),
+  locationId: z.string().min(1),
+});
+
 const createAssetSchema = z
   .object({
     workspaceId: z.string().min(1),
@@ -338,7 +343,16 @@ export async function createLocationAction(formData: FormData) {
   });
 
   revalidateWorkspaceViews();
-  redirect("/locations");
+  const nextParams = new URLSearchParams();
+  nextParams.set("workspaceId", parsed.workspaceId);
+  nextParams.set("saved", "1");
+
+  if (parsed.parentId) {
+    nextParams.set("parentId", parsed.parentId);
+  }
+
+  nextParams.set("kind", parsed.kind);
+  redirect(`/locations?${nextParams.toString()}`);
 }
 
 function collectDescendantIds(
@@ -592,6 +606,55 @@ export async function deleteLocationDescriptorAction(formData: FormData) {
 
   await prisma.locationDescriptor.delete({
     where: { id: parsed.descriptorId },
+  });
+
+  revalidateWorkspaceViews();
+  redirect("/locations");
+}
+
+export async function deleteLocationAction(formData: FormData) {
+  const parsed = deleteLocationSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const location = await prisma.locationNode.findUnique({
+    where: { id: parsed.locationId },
+    include: {
+      currentAssets: {
+        select: { id: true },
+        take: 1,
+      },
+      placements: {
+        select: { id: true },
+        take: 1,
+      },
+      children: {
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+  if (!location || location.workspaceId !== parsed.workspaceId) {
+    throw new Error("Location not found.");
+  }
+
+  if (location.children.length) {
+    throw new Error("Delete child locations first.");
+  }
+
+  if (location.currentAssets.length || location.placements.length) {
+    throw new Error("This location still has associated assets or asset history.");
+  }
+
+  await prisma.locationNode.delete({
+    where: { id: parsed.locationId },
   });
 
   revalidateWorkspaceViews();

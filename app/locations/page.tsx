@@ -1,5 +1,6 @@
 import {
   addLocationDescriptorAction,
+  deleteLocationAction,
   deleteLocationDescriptorAction,
   moveLocationAction,
   updateLocationAction,
@@ -10,6 +11,7 @@ import {
   locationDescriptorTypeLabels,
   locationDescriptorTypeValues,
   locationKindLabels,
+  type LocationKind,
   wallDirectionLabels,
   wallDirectionValues,
 } from "@/lib/constants";
@@ -169,6 +171,14 @@ function renderTree(
                   </div>
                 </form>
 
+                <form action={deleteLocationAction} className="location-delete-form">
+                  <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
+                  <input type="hidden" name="locationId" value={location.id} />
+                  <button type="submit" className="ghost-button descriptor-remove-button">
+                    {data.dictionary.locations.deleteLocation}
+                  </button>
+                </form>
+
                 <div className="descriptor-editor">
                   <div className="descriptor-editor-header">
                     <strong>{data.dictionary.locations.descriptorsTitle}</strong>
@@ -249,7 +259,7 @@ function renderTree(
 export default async function LocationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ workspaceId?: string }>;
+  searchParams: Promise<{ workspaceId?: string; parentId?: string; kind?: string; saved?: string }>;
 }) {
   const params = await searchParams;
   const data = await getLocationsData(params.workspaceId);
@@ -269,9 +279,12 @@ export default async function LocationsPage({
 
       <div className="grid-2">
         <Panel title={data.dictionary.locations.createTitle}>
+          {params.saved === "1" ? <div className="hero-note">{data.dictionary.locations.savedMessage}</div> : null}
           <LocationCreateForm
             workspaceId={data.currentWorkspace?.id ?? ""}
             locale={data.locale}
+            defaultParentId={params.parentId}
+            defaultKind={params.kind as LocationKind | undefined}
             dictionary={{
               common: {
                 englishName: data.dictionary.common.englishName,

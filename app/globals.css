@@ -100,6 +100,10 @@ textarea {
   border-radius: var(--radius-lg);
 }
 
+.hero-note {
+  margin-bottom: 0.85rem;
+}
+
 .tree-list {
   display: grid;
   gap: 0.85rem;
@@ -208,6 +212,10 @@ textarea {
   border-top: 1px solid var(--color-line);
   display: grid;
   gap: 0.9rem;
+}
+
+.location-delete-form {
+  margin-top: 0.9rem;
 }
 
 .descriptor-editor-header {
