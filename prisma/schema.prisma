@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum Locale {
+  ZH_CN
+  EN
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum AccentColor {
+  BLUE
+  CYAN
+  TEAL
+  GREEN
+  LIME
+  YELLOW
+  ORANGE
+  RED
+  PINK
+  PURPLE
+}
+
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
+enum LocationNodeType {
+  HOUSE
+  FLOOR
+  ROOM
+  AREA
+  STORAGE
+  SHELF
+  DRAWER
+  BIN
+  BOX
+  ROW
+  COLUMN
+  POSITION
+}
+
+enum SensitivityLevel {
+  LOW
+  MEDIUM
+}
+
+enum TrackingMode {
+  INDIVIDUAL
+  GROUP
+}
+
+enum AssetStatus {
+  ACTIVE
+  MISSING
+  ARCHIVED
+}
+
+enum PlacementConfidence {
+  VERIFIED
+  ASSUMED
+  REPORTED
+}
+
+model User {
+  id               String                @id @default(cuid())
+  authUserId       String?               @unique
+  email            String                @unique
+  passwordHash     String                @default("__MINIAUTH_MANAGED__")
+  displayName      String
+  role             UserRole              @default(USER)
+  locale           Locale                @default(ZH_CN)
+  timeZone         String                @default("America/Los_Angeles")
+  themePreference  ThemePreference       @default(SYSTEM)
+  accentColor      AccentColor           @default(BLUE)
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  memberships      WorkspaceMembership[]
+  createdAssets    Asset[]               @relation("CreatedAssets")
+  placementEvents  AssetPlacement[]      @relation("PlacementActor")
+}
+
+model Workspace {
+  id             String                @id @default(cuid())
+  authWorkspaceId String?              @unique
+  slug           String                @unique
+  name           String
+  description    String?
+  isArchived     Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  memberships    WorkspaceMembership[]
+  locations      LocationNode[]
+  assets         Asset[]
+}
+
+model WorkspaceMembership {
+  id          String        @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model LocationNode {
+  id             String           @id @default(cuid())
+  workspaceId     String
+  parentId        String?
+  kind           LocationNodeType
+  code           String?
+  nameEn         String?
+  nameZh         String?
+  sortOrder      Int              @default(0)
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent         LocationNode?    @relation("LocationChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children       LocationNode[]   @relation("LocationChildren")
+  currentAssets  Asset[]          @relation("CurrentAssetLocation")
+  placements     AssetPlacement[]
+
+  @@index([workspaceId, parentId, sortOrder])
+}
+
+model Asset {
+  id                String           @id @default(cuid())
+  workspaceId       String
+  createdByUserId   String
+  currentLocationId String?
+  assetCode         String
+  nameEn            String?
+  nameZh            String?
+  brand             String?
+  model             String?
+  description       String?
+  barcodeValue      String?
+  barcodeFormat     String?
+  barcodeSource     String?
+  quantity          Int              @default(1)
+  trackingMode      TrackingMode     @default(INDIVIDUAL)
+  sensitivityLevel  SensitivityLevel @default(LOW)
+  status            AssetStatus      @default(ACTIVE)
+  lastVerifiedAt    DateTime?
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy         User             @relation("CreatedAssets", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  currentLocation   LocationNode?    @relation("CurrentAssetLocation", fields: [currentLocationId], references: [id], onDelete: SetNull)
+  placements        AssetPlacement[]
+
+  @@index([workspaceId, updatedAt])
+  @@unique([workspaceId, assetCode])
+}
+
+model AssetPlacement {
+  id             String              @id @default(cuid())
+  assetId         String
+  locationId      String?
+  movedByUserId   String
+  confidence      PlacementConfidence @default(VERIFIED)
+  note           String?
+  movedAt        DateTime            @default(now())
+  asset          Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  location       LocationNode?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  movedBy        User                @relation("PlacementActor", fields: [movedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([assetId, movedAt])
+}
