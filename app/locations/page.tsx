@@ -183,10 +183,12 @@ export default async function LocationsPage({
           </form>
         </Panel>
 
-        <Panel title={data.dictionary.locations.title}>
+        <div className="full-span">
+          <Panel title={data.dictionary.locations.title}>
           <p className="muted">{data.dictionary.locations.standardHint}</p>
           {renderTree(null, data)}
-        </Panel>
+          </Panel>
+        </div>
       </div>
     </>
   );
