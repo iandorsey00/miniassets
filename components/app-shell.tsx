@@ -134,7 +134,7 @@ export function AppShell({
           )}
 
           <div className="topbar-actions">
-            <div className="user-chip">{user.displayName}</div>
+            <div className="user-chip"><span>{user.displayName}</span></div>
             <form action={logoutAction}>
               <button type="submit" className="ghost-button">
                 <span className="button-content">
