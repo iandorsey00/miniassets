@@ -102,6 +102,32 @@ export const locationKindGroupMap = {
   COORDINATES: ["ROW", "COLUMN", "POSITION"],
 } as const satisfies Record<string, readonly LocationKind[]>;
 
+export const positionPresetValues = [
+  "TOP",
+  "BOTTOM",
+  "LEFT",
+  "RIGHT",
+  "CENTER",
+  "FRONT",
+  "BACK",
+  "INSIDE",
+  "OUTSIDE",
+  "OTHER",
+] as const;
+
+export const positionPresetLabels = {
+  TOP: { zh: "上", en: "Top" },
+  BOTTOM: { zh: "下", en: "Bottom" },
+  LEFT: { zh: "左", en: "Left" },
+  RIGHT: { zh: "右", en: "Right" },
+  CENTER: { zh: "中", en: "Center" },
+  FRONT: { zh: "前", en: "Front" },
+  BACK: { zh: "后", en: "Back" },
+  INSIDE: { zh: "内", en: "Inside" },
+  OUTSIDE: { zh: "外", en: "Outside" },
+  OTHER: { zh: "其他", en: "Other" },
+} as const;
+
 export function getAllowedLocationKindsByGroup(parentKind: LocationKind | null) {
   const allowedKinds = getAllowedLocationKinds(parentKind);
 

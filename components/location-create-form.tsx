@@ -8,6 +8,8 @@ import {
   getAllowedLocationKindsByGroup,
   isNumericCodeLocationKind,
   locationKindLabels,
+  positionPresetLabels,
+  positionPresetValues,
   type LocationKind,
 } from "@/lib/constants";
 
@@ -37,6 +39,8 @@ type LocationCreateFormProps = {
       typeGroupStructure: string;
       typeGroupStorage: string;
       typeGroupCoordinates: string;
+      positionPreset: string;
+      positionPresetHelp: string;
     };
   };
   locations: LocationOption[];
@@ -58,8 +62,11 @@ export function LocationCreateForm({
   const allowedKindGroups = useMemo(() => getAllowedLocationKindsByGroup(parentKind), [parentKind]);
   const [kind, setKind] = useState<LocationKind>("HOUSE");
   const selectedKind = allowedKinds.includes(kind) ? kind : (allowedKinds[0] ?? "HOUSE");
+  const [positionPreset, setPositionPreset] = useState<(typeof positionPresetValues)[number]>("TOP");
 
   const numericCode = isNumericCodeLocationKind(selectedKind);
+  const showPositionPreset = selectedKind === "POSITION";
+  const requireCustomNames = showPositionPreset && positionPreset === "OTHER";
 
   return (
     <form action={createLocationAction} className="form-grid">
@@ -120,13 +127,36 @@ export function LocationCreateForm({
 
       <div className="field-stack">
         <label htmlFor="nameEn">{dictionary.common.englishName}</label>
-        <input id="nameEn" name="nameEn" />
+        <input id="nameEn" name="nameEn" disabled={showPositionPreset && !requireCustomNames} />
       </div>
 
       <div className="field-stack">
         <label htmlFor="nameZh">{dictionary.common.chineseName}</label>
-        <input id="nameZh" name="nameZh" />
+        <input id="nameZh" name="nameZh" disabled={showPositionPreset && !requireCustomNames} />
       </div>
+
+      {showPositionPreset ? (
+        <div className="field-stack">
+          <label htmlFor="positionPreset">{dictionary.locations.positionPreset}</label>
+          <select
+            id="positionPreset"
+            name="positionPreset"
+            value={positionPreset}
+            onChange={(event) => setPositionPreset(event.target.value as (typeof positionPresetValues)[number])}
+          >
+            {positionPresetValues.map((value) => (
+              <option key={value} value={value}>
+                {positionPresetLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{dictionary.locations.positionPresetHelp}</p>
+        </div>
+      ) : null}
+
+      {showPositionPreset ? (
+        <input type="hidden" name="positionPreset" value={positionPreset} />
+      ) : null}
 
       <div className="field-stack">
         <label htmlFor="code">{dictionary.locations.code}</label>

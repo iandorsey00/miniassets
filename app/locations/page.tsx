@@ -289,6 +289,8 @@ export default async function LocationsPage({
                 typeGroupStructure: data.dictionary.locations.typeGroupStructure,
                 typeGroupStorage: data.dictionary.locations.typeGroupStorage,
                 typeGroupCoordinates: data.dictionary.locations.typeGroupCoordinates,
+                positionPreset: data.dictionary.locations.positionPreset,
+                positionPresetHelp: data.dictionary.locations.positionPresetHelp,
               },
             }}
             locations={locationOptions}

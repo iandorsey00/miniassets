@@ -12,6 +12,8 @@ import {
   isNumericCodeLocationKind,
   locationDescriptorTypeValues,
   locationNodeTypeValues,
+  positionPresetLabels,
+  positionPresetValues,
   wallDirectionValues,
   WORKSPACE_COOKIE,
 } from "@/lib/constants";
@@ -25,6 +27,7 @@ const createLocationSchema = z.object({
   code: z.string().trim().max(32).optional(),
   nameEn: z.string().trim().max(80).optional(),
   nameZh: z.string().trim().max(80).optional(),
+  positionPreset: z.enum(positionPresetValues).optional(),
   notes: z.string().trim().max(500).optional(),
 });
 
@@ -41,6 +44,7 @@ const updateLocationSchema = z.object({
   code: z.string().trim().max(32).optional(),
   nameEn: z.string().trim().max(80).optional(),
   nameZh: z.string().trim().max(80).optional(),
+  positionPreset: z.enum(positionPresetValues).optional(),
   notes: z.string().trim().max(500).optional(),
 });
 
@@ -152,6 +156,26 @@ function revalidateWorkspaceViews() {
 
 function normalizeLocationCode(value: string | undefined) {
   return value?.trim() || "";
+}
+
+function applyPositionPreset(
+  locale: "ZH_CN" | "EN",
+  kind: (typeof locationNodeTypeValues)[number],
+  positionPreset: (typeof positionPresetValues)[number] | undefined,
+  nameEn: string | undefined,
+  nameZh: string | undefined,
+) {
+  if (kind !== "POSITION" || !positionPreset || positionPreset === "OTHER") {
+    return {
+      nameEn: nameEn || null,
+      nameZh: nameZh || null,
+    };
+  }
+
+  return {
+    nameEn: positionPresetLabels[positionPreset].en,
+    nameZh: positionPresetLabels[positionPreset].zh,
+  };
 }
 
 function validateLocationKindAndCode(
@@ -277,6 +301,7 @@ export async function createLocationAction(formData: FormData) {
     code: formData.get("code") || undefined,
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
+    positionPreset: formData.get("positionPreset") || undefined,
     notes: formData.get("notes") || undefined,
   });
 
@@ -297,6 +322,7 @@ export async function createLocationAction(formData: FormData) {
   }
 
   validateLocationKindAndCode(parent?.kind ?? null, parsed.kind, parsed.code);
+  const resolvedNames = applyPositionPreset(context.locale, parsed.kind, parsed.positionPreset, parsed.nameEn, parsed.nameZh);
 
   await prisma.locationNode.create({
     data: {
@@ -304,8 +330,8 @@ export async function createLocationAction(formData: FormData) {
       parentId: parsed.parentId || null,
       kind: parsed.kind,
       code: parsed.code || null,
-      nameEn: parsed.nameEn || null,
-      nameZh: parsed.nameZh || null,
+      nameEn: resolvedNames.nameEn,
+      nameZh: resolvedNames.nameZh,
       notes: parsed.notes || null,
       sortOrder: 0,
     },
@@ -398,6 +424,7 @@ export async function updateLocationAction(formData: FormData) {
     code: formData.get("code") || undefined,
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
+    positionPreset: formData.get("positionPreset") || undefined,
     notes: formData.get("notes") || undefined,
   });
 
@@ -423,6 +450,7 @@ export async function updateLocationAction(formData: FormData) {
   }
 
   validateLocationKindAndCode(existingLocation.parent?.kind ?? null, parsed.kind, parsed.code);
+  const resolvedNames = applyPositionPreset(context.locale, parsed.kind, parsed.positionPreset, parsed.nameEn, parsed.nameZh);
 
   const allowedChildKinds = getAllowedLocationKinds(parsed.kind);
   const invalidChild = existingLocation.children.find((child) => !allowedChildKinds.includes(child.kind));
@@ -435,8 +463,8 @@ export async function updateLocationAction(formData: FormData) {
     data: {
       kind: parsed.kind,
       code: parsed.code || null,
-      nameEn: parsed.nameEn || null,
-      nameZh: parsed.nameZh || null,
+      nameEn: resolvedNames.nameEn,
+      nameZh: resolvedNames.nameZh,
       notes: parsed.notes || null,
     },
   });
