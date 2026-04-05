@@ -39,6 +39,29 @@ const moveLocationSchema = z.object({
   parentId: z.string().optional(),
 });
 
+const updateLocationSchema = z.object({
+  workspaceId: z.string().min(1),
+  locationId: z.string().min(1),
+  kind: z.enum([
+    "HOUSE",
+    "FLOOR",
+    "ROOM",
+    "AREA",
+    "STORAGE",
+    "SHELF",
+    "DRAWER",
+    "BIN",
+    "BOX",
+    "ROW",
+    "COLUMN",
+    "POSITION",
+  ]),
+  code: z.string().trim().max(32).optional(),
+  nameEn: z.string().trim().max(80).optional(),
+  nameZh: z.string().trim().max(80).optional(),
+  notes: z.string().trim().max(500).optional(),
+});
+
 const createAssetSchema = z
   .object({
     workspaceId: z.string().min(1),
@@ -179,6 +202,48 @@ export async function moveLocationAction(formData: FormData) {
     where: { id: parsed.locationId },
     data: {
       parentId: nextParentId,
+    },
+  });
+
+  revalidatePath("/locations");
+  revalidatePath("/dashboard");
+  revalidatePath("/assets");
+  redirect("/locations");
+}
+
+export async function updateLocationAction(formData: FormData) {
+  const parsed = updateLocationSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+    kind: formData.get("kind"),
+    code: formData.get("code") || undefined,
+    nameEn: formData.get("nameEn") || undefined,
+    nameZh: formData.get("nameZh") || undefined,
+    notes: formData.get("notes") || undefined,
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const existingLocation = await prisma.locationNode.findUnique({
+    where: { id: parsed.locationId },
+    select: { id: true, workspaceId: true },
+  });
+
+  if (!existingLocation || existingLocation.workspaceId !== parsed.workspaceId) {
+    throw new Error("Location not found.");
+  }
+
+  await prisma.locationNode.update({
+    where: { id: parsed.locationId },
+    data: {
+      kind: parsed.kind,
+      code: parsed.code || null,
+      nameEn: parsed.nameEn || null,
+      nameZh: parsed.nameZh || null,
+      notes: parsed.notes || null,
     },
   });
 

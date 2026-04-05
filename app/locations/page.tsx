@@ -1,5 +1,5 @@
 import { PageHeader, Panel } from "@/components/ui";
-import { createLocationAction, moveLocationAction } from "@/lib/actions";
+import { createLocationAction, moveLocationAction, updateLocationAction } from "@/lib/actions";
 import { locationKindLabels } from "@/lib/constants";
 import { buildLocationPath, getLocationsData } from "@/lib/data";
 import { pickLocalizedText } from "@/lib/present";
@@ -26,6 +26,45 @@ function renderTree(
             </div>
             <div className="row-meta">{data.assetCounts.get(location.id) ?? 0}</div>
           </div>
+          <form action={updateLocationAction} className="form-grid" style={{ marginTop: "0.85rem" }}>
+            <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
+            <input type="hidden" name="locationId" value={location.id} />
+
+            <div className="field-stack">
+              <label htmlFor={`kind-${location.id}`}>Type</label>
+              <select id={`kind-${location.id}`} name="kind" defaultValue={location.kind}>
+                {Object.entries(locationKindLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor={`code-${location.id}`}>Code</label>
+              <input id={`code-${location.id}`} name="code" defaultValue={location.code ?? ""} />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor={`nameEn-${location.id}`}>{data.dictionary.common.englishName}</label>
+              <input id={`nameEn-${location.id}`} name="nameEn" defaultValue={location.nameEn ?? ""} />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor={`nameZh-${location.id}`}>{data.dictionary.common.chineseName}</label>
+              <input id={`nameZh-${location.id}`} name="nameZh" defaultValue={location.nameZh ?? ""} />
+            </div>
+
+            <div className="field-stack full-span">
+              <label htmlFor={`notes-${location.id}`}>{data.dictionary.common.notes}</label>
+              <textarea id={`notes-${location.id}`} name="notes" defaultValue={location.notes ?? ""} />
+            </div>
+
+            <div className="full-span">
+              <button type="submit">Save location</button>
+            </div>
+          </form>
           <div className="tree-children">{renderTree(location.id, data)}</div>
         </div>
       ))}
