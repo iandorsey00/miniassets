@@ -1,3 +1,9 @@
+/*
+  MiniTickets-derived family foundation for MiniAssets.
+  Shared conventions: theme/accent tokens, shell/auth primitives, and footer copy
+  should stay aligned across sibling apps unless deliberately changed together.
+*/
+
 :root {
   --font-size-base: 16px;
   --radius-xl: 28px;

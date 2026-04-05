@@ -1,7 +1,7 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { PageHeader, Panel } from "@/components/ui";
 import { createAssetAction } from "@/lib/actions";
-import { locationKindLabels } from "@/lib/constants";
+import { locationKindLabels, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
 import { getLocationsData } from "@/lib/data";
 
 export default async function NewAssetPage({
@@ -20,7 +20,19 @@ export default async function NewAssetPage({
         <Panel title={data.dictionary.assets.scannerTitle}>
           <div className="stack">
             <p className="muted">{data.dictionary.assets.scannerHelp}</p>
-            <BarcodeScanner targetInputId="barcodeValue" lookupEndpoint="/api/barcodes/lookup" />
+            <BarcodeScanner
+              targetInputId="barcodeValue"
+              lookupEndpoint="/api/barcodes/lookup"
+              labels={{
+                start: data.dictionary.assets.scannerStart,
+                stop: data.dictionary.assets.scannerStop,
+                unavailable: data.dictionary.assets.scannerUnavailable,
+                cameraFailed: data.dictionary.assets.scannerCameraFailed,
+                lookupSuccess: data.dictionary.assets.scannerLookupSuccess,
+                lookupMissing: data.dictionary.assets.scannerLookupMissing,
+                lookupFailed: data.dictionary.assets.scannerLookupFailed,
+              }}
+            />
             <p className="muted">{data.dictionary.assets.lookupHelp}</p>
           </div>
         </Panel>
@@ -57,6 +69,11 @@ export default async function NewAssetPage({
             </div>
 
             <div className="field-stack">
+              <label htmlFor="color">{data.dictionary.common.color}</label>
+              <input id="color" name="color" />
+            </div>
+
+            <div className="field-stack">
               <label htmlFor="brand">{data.dictionary.common.brand}</label>
               <input id="brand" name="brand" />
             </div>
@@ -72,15 +89,18 @@ export default async function NewAssetPage({
             </div>
 
             <div className="field-stack">
-              <label htmlFor="barcodeFormat">Barcode format</label>
+              <label htmlFor="barcodeFormat">{data.dictionary.common.barcodeFormat}</label>
               <input id="barcodeFormat" name="barcodeFormat" />
             </div>
 
             <div className="field-stack">
               <label htmlFor="trackingMode">{data.dictionary.common.trackingMode}</label>
               <select id="trackingMode" name="trackingMode" defaultValue="INDIVIDUAL">
-                <option value="INDIVIDUAL">Individual</option>
-                <option value="GROUP">Group</option>
+                {Object.entries(trackingModeLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -92,13 +112,16 @@ export default async function NewAssetPage({
             <div className="field-stack">
               <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>
               <select id="sensitivityLevel" name="sensitivityLevel" defaultValue="LOW">
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
+                {Object.entries(sensitivityLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="field-stack">
-              <label htmlFor="barcodeSource">Barcode source</label>
+              <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
               <input id="barcodeSource" name="barcodeSource" defaultValue="manual-or-scan" />
             </div>
 

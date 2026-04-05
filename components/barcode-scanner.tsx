@@ -5,6 +5,15 @@ import { useEffect, useRef, useState } from "react";
 type BarcodeScannerProps = {
   targetInputId: string;
   lookupEndpoint: string;
+  labels: {
+    start: string;
+    stop: string;
+    unavailable: string;
+    cameraFailed: string;
+    lookupSuccess: string;
+    lookupMissing: string;
+    lookupFailed: string;
+  };
 };
 
 type BarcodeDetectorLike = {
@@ -20,7 +29,7 @@ declare global {
   }
 }
 
-export function BarcodeScanner({ targetInputId, lookupEndpoint }: BarcodeScannerProps) {
+export function BarcodeScanner({ targetInputId, lookupEndpoint, labels }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetectorLike | null>(null);
@@ -41,7 +50,7 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint }: BarcodeScanner
     setLookupMessage(null);
 
     if (!window.BarcodeDetector) {
-      setError("BarcodeDetector is not available in this browser.");
+      setError(labels.unavailable);
       return;
     }
 
@@ -62,7 +71,7 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint }: BarcodeScanner
       setActive(true);
       requestAnimationFrame(scanLoop);
     } catch (scanError) {
-      setError(scanError instanceof Error ? scanError.message : "Failed to access the camera.");
+      setError(scanError instanceof Error ? scanError.message : labels.cameraFailed);
     }
   }
 
@@ -116,12 +125,12 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint }: BarcodeScanner
             if (model && !model.value && payload.result.model) {
               model.value = payload.result.model;
             }
-            setLookupMessage("Lookup returned some suggested product metadata.");
+            setLookupMessage(labels.lookupSuccess);
           } else {
-            setLookupMessage("Barcode captured. No external metadata provider is configured or matched.");
+            setLookupMessage(labels.lookupMissing);
           }
         } catch {
-          setLookupMessage("Barcode captured. Metadata lookup did not return usable data.");
+          setLookupMessage(labels.lookupFailed);
         }
 
         return;
@@ -137,7 +146,7 @@ export function BarcodeScanner({ targetInputId, lookupEndpoint }: BarcodeScanner
     <div className="scanner-card">
       <div className="scanner-actions">
         <button type="button" onClick={active ? stopScanner : startScanner}>
-          {active ? "Stop scanner" : "Start scanner"}
+          {active ? labels.stop : labels.start}
         </button>
       </div>
       <video ref={videoRef} className={`scanner-preview ${active ? "is-active" : ""}`} muted playsInline />

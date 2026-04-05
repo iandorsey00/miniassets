@@ -32,6 +32,8 @@ export const locationNodeTypeValues = [
   "COLUMN",
   "POSITION",
 ] as const;
+export const locationDescriptorTypeValues = ["WALL_ZONE", "FRONT_OF_ZONE"] as const;
+export const wallDirectionValues = ["NORTH", "EAST", "SOUTH", "WEST"] as const;
 
 export const accentTokenMap: Record<(typeof accentValues)[number], string> = {
   BLUE: "blue",
@@ -74,6 +76,18 @@ export const locationKindLabels: Record<
   COLUMN: { zh: "列", en: "Column" },
   POSITION: { zh: "位置", en: "Position" },
 };
+
+export const locationDescriptorTypeLabels = {
+  WALL_ZONE: { zh: "墙面区域", en: "Wall zone" },
+  FRONT_OF_ZONE: { zh: "前方区域", en: "In front of zone" },
+} as const;
+
+export const wallDirectionLabels = {
+  NORTH: { zh: "北墙", en: "North wall" },
+  EAST: { zh: "东墙", en: "East wall" },
+  SOUTH: { zh: "南墙", en: "South wall" },
+  WEST: { zh: "西墙", en: "West wall" },
+} as const;
 
 export const sensitivityLabels = {
   LOW: { zh: "低", en: "Low" },

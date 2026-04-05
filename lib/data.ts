@@ -5,6 +5,7 @@ import { SHARED_PREFERENCE_COOKIE_NAMES } from "@/lib/auth-config";
 import { requireUser } from "@/lib/auth";
 import { ACCENT_COOKIE, LOCALE_COOKIE, THEME_COOKIE, WORKSPACE_COOKIE } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
+import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { pickLocalizedText } from "@/lib/present";
 import { prisma } from "@/lib/prisma";
 
@@ -261,6 +262,21 @@ export async function getLocationsData(workspaceId?: string) {
     prisma.locationNode.findMany({
       where: { workspaceId: context.currentWorkspace.id },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      include: {
+        descriptors: {
+          include: {
+            referenceLocation: {
+              select: {
+                id: true,
+                code: true,
+                nameEn: true,
+                nameZh: true,
+              },
+            },
+          },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        },
+      },
     }),
     prisma.asset.groupBy({
       by: ["currentLocationId"],
@@ -294,6 +310,21 @@ export async function exportWorkspaceData(workspaceId?: string) {
     prisma.locationNode.findMany({
       where: { workspaceId: context.currentWorkspace.id },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      include: {
+        descriptors: {
+          include: {
+            referenceLocation: {
+              select: {
+                id: true,
+                code: true,
+                nameEn: true,
+                nameZh: true,
+              },
+            },
+          },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        },
+      },
     }),
     prisma.asset.findMany({
       where: { workspaceId: context.currentWorkspace.id },
@@ -334,12 +365,26 @@ export async function exportWorkspaceData(workspaceId?: string) {
       notes: location.notes,
       standardizedPath: buildLocationPath(locations, location.id, "EN"),
       localizedPath: buildLocationPath(locations, location.id, context.locale),
+      descriptors: location.descriptors.map((descriptor) => ({
+        type: descriptor.type,
+        wall: descriptor.wall,
+        ordinal: descriptor.ordinal,
+        qualifier: descriptor.qualifier,
+        referenceLocationId: descriptor.referenceLocationId,
+        referenceLocationPath:
+          descriptor.referenceLocationId && locations.length
+            ? buildLocationPath(locations, descriptor.referenceLocationId, "EN")
+            : null,
+        localizedLabel: formatLocationDescriptor(descriptor, context.locale),
+        englishLabel: formatLocationDescriptor(descriptor, "EN"),
+      })),
     })),
     assets: assets.map((asset) => ({
       id: asset.id,
       assetCode: asset.assetCode,
       nameEn: asset.nameEn,
       nameZh: asset.nameZh,
+      color: asset.color,
       brand: asset.brand,
       model: asset.model,
       description: asset.description,

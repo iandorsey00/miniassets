@@ -39,7 +39,9 @@ export default async function DashboardPage({
                   <div>
                     <div className="asset-code">{move.asset.assetCode}</div>
                     <strong>{pickLocalizedText(data.locale, move.asset)}</strong>
-                    <div className="tree-path">{move.location ? pickLocalizedText(data.locale, move.location) : "Missing"}</div>
+                    <div className="tree-path">
+                      {move.location ? pickLocalizedText(data.locale, move.location) : data.dictionary.dashboard.missingAssets}
+                    </div>
                   </div>
                   <div className="row-meta">
                     <Badge

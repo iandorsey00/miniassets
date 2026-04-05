@@ -28,3 +28,25 @@ export function formatDateTime(value: Date | null | undefined, localeCode: strin
 export function normalizeBarcode(input: string) {
   return input.replace(/[^0-9A-Za-z]/g, "").trim();
 }
+
+export function formatAssetLabel(
+  locale: AppLocale,
+  values: {
+    nameEn?: string | null;
+    nameZh?: string | null;
+    color?: string | null;
+    brand?: string | null;
+    model?: string | null;
+    assetCode?: string | null;
+  },
+  options?: { includeModel?: boolean },
+) {
+  const segments = [
+    pickLocalizedText(locale, values),
+    values.color?.trim() || "",
+    values.brand?.trim() || "",
+    options?.includeModel ? values.model?.trim() || "" : "",
+  ].filter(Boolean);
+
+  return segments.join(", ") || values.assetCode?.trim() || "";
+}

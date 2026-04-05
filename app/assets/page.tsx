@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AssetRow, Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
 import { assetStatusLabels } from "@/lib/constants";
 import { buildLocationPath, getAssetsData } from "@/lib/data";
-import { pickLocalizedText } from "@/lib/present";
+import { formatAssetLabel } from "@/lib/present";
 
 export default async function AssetsPage({
   searchParams,
@@ -47,7 +47,7 @@ export default async function AssetsPage({
                 <AssetRow
                   href={`/assets/${asset.id}`}
                   code={asset.assetCode}
-                  title={pickLocalizedText(data.locale, asset)}
+                  title={formatAssetLabel(data.locale, asset)}
                   meta={path}
                 />
                 <Badge

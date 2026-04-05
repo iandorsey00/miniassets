@@ -414,7 +414,9 @@ export function getMiniAuthLoginUrl(currentPath?: string) {
     return AUTH_ROUTES.login;
   }
 
-  const redirectTarget = currentPath ? `${process.env.APP_URL || ""}${currentPath}` : process.env.APP_URL || "";
+  const appUrl = process.env.APP_URL?.trim().replace(/\/$/, "") || "";
+  const targetPath = currentPath || AUTH_ROUTES.postLogin;
+  const redirectTarget = appUrl ? `${appUrl}${targetPath}` : "";
   if (!redirectTarget) {
     return `${baseUrl.replace(/\/$/, "")}/login`;
   }

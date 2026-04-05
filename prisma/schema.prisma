@@ -55,6 +55,18 @@ enum LocationNodeType {
   POSITION
 }
 
+enum LocationDescriptorType {
+  WALL_ZONE
+  FRONT_OF_ZONE
+}
+
+enum WallDirection {
+  NORTH
+  EAST
+  SOUTH
+  WEST
+}
+
 enum SensitivityLevel {
   LOW
   MEDIUM
@@ -97,17 +109,17 @@ model User {
 }
 
 model Workspace {
-  id             String                @id @default(cuid())
-  authWorkspaceId String?              @unique
-  slug           String                @unique
-  name           String
-  description    String?
-  isArchived     Boolean               @default(false)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  memberships    WorkspaceMembership[]
-  locations      LocationNode[]
-  assets         Asset[]
+  id              String                @id @default(cuid())
+  authWorkspaceId String?               @unique
+  slug            String                @unique
+  name            String
+  description     String?
+  isArchived      Boolean               @default(false)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  memberships     WorkspaceMembership[]
+  locations       LocationNode[]
+  assets          Asset[]
 }
 
 model WorkspaceMembership {
@@ -123,24 +135,45 @@ model WorkspaceMembership {
 }
 
 model LocationNode {
-  id             String           @id @default(cuid())
-  workspaceId     String
-  parentId        String?
-  kind           LocationNodeType
-  code           String?
-  nameEn         String?
-  nameZh         String?
-  sortOrder      Int              @default(0)
-  notes          String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  parent         LocationNode?    @relation("LocationChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children       LocationNode[]   @relation("LocationChildren")
-  currentAssets  Asset[]          @relation("CurrentAssetLocation")
-  placements     AssetPlacement[]
+  id                 String               @id @default(cuid())
+  workspaceId        String
+  parentId           String?
+  kind               LocationNodeType
+  code               String?
+  nameEn             String?
+  nameZh             String?
+  sortOrder          Int                  @default(0)
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent             LocationNode?        @relation("LocationChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children           LocationNode[]       @relation("LocationChildren")
+  currentAssets      Asset[]              @relation("CurrentAssetLocation")
+  placements         AssetPlacement[]
+  descriptors        LocationDescriptor[] @relation("LocationNodeDescriptors")
+  referencedByZones  LocationDescriptor[] @relation("ReferencedLocationDescriptors")
 
   @@index([workspaceId, parentId, sortOrder])
+}
+
+model LocationDescriptor {
+  id                  String                 @id @default(cuid())
+  locationId          String
+  type                LocationDescriptorType
+  wall                WallDirection?
+  ordinal             Int?
+  qualifier           String?
+  referenceLocationId String?
+  sortOrder           Int                    @default(0)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  location            LocationNode           @relation("LocationNodeDescriptors", fields: [locationId], references: [id], onDelete: Cascade)
+  referenceLocation   LocationNode?          @relation("ReferencedLocationDescriptors", fields: [referenceLocationId], references: [id], onDelete: SetNull)
+
+  @@index([locationId, sortOrder])
+  @@unique([locationId, wall])
+  @@unique([locationId, referenceLocationId])
 }
 
 model Asset {
@@ -151,6 +184,7 @@ model Asset {
   assetCode         String
   nameEn            String?
   nameZh            String?
+  color             String?
   brand             String?
   model             String?
   description       String?
@@ -175,16 +209,16 @@ model Asset {
 }
 
 model AssetPlacement {
-  id             String              @id @default(cuid())
-  assetId         String
-  locationId      String?
-  movedByUserId   String
-  confidence      PlacementConfidence @default(VERIFIED)
+  id            String               @id @default(cuid())
+  assetId        String
+  locationId     String?
+  movedByUserId  String
+  confidence     PlacementConfidence @default(VERIFIED)
   note           String?
-  movedAt        DateTime            @default(now())
-  asset          Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  location       LocationNode?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  movedBy        User                @relation("PlacementActor", fields: [movedByUserId], references: [id], onDelete: Restrict)
+  movedAt        DateTime             @default(now())
+  asset          Asset                @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  location       LocationNode?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  movedBy        User                 @relation("PlacementActor", fields: [movedByUserId], references: [id], onDelete: Restrict)
 
   @@index([assetId, movedAt])
 }

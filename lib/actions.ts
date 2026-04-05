@@ -6,27 +6,19 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getMiniAuthLogoutUrl, requireUser, revokeMiniAuthSession } from "@/lib/auth";
-import { WORKSPACE_COOKIE } from "@/lib/constants";
+import {
+  locationDescriptorTypeValues,
+  locationNodeTypeValues,
+  wallDirectionValues,
+  WORKSPACE_COOKIE,
+} from "@/lib/constants";
 import { getViewerContext } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
 const createLocationSchema = z.object({
   workspaceId: z.string().min(1),
   parentId: z.string().optional(),
-  kind: z.enum([
-    "HOUSE",
-    "FLOOR",
-    "ROOM",
-    "AREA",
-    "STORAGE",
-    "SHELF",
-    "DRAWER",
-    "BIN",
-    "BOX",
-    "ROW",
-    "COLUMN",
-    "POSITION",
-  ]),
+  kind: z.enum(locationNodeTypeValues),
   code: z.string().trim().max(32).optional(),
   nameEn: z.string().trim().max(80).optional(),
   nameZh: z.string().trim().max(80).optional(),
@@ -42,24 +34,48 @@ const moveLocationSchema = z.object({
 const updateLocationSchema = z.object({
   workspaceId: z.string().min(1),
   locationId: z.string().min(1),
-  kind: z.enum([
-    "HOUSE",
-    "FLOOR",
-    "ROOM",
-    "AREA",
-    "STORAGE",
-    "SHELF",
-    "DRAWER",
-    "BIN",
-    "BOX",
-    "ROW",
-    "COLUMN",
-    "POSITION",
-  ]),
+  kind: z.enum(locationNodeTypeValues),
   code: z.string().trim().max(32).optional(),
   nameEn: z.string().trim().max(80).optional(),
   nameZh: z.string().trim().max(80).optional(),
   notes: z.string().trim().max(500).optional(),
+});
+
+const addLocationDescriptorSchema = z
+  .object({
+    workspaceId: z.string().min(1),
+    locationId: z.string().min(1),
+    type: z.enum(locationDescriptorTypeValues),
+    wall: z.enum(wallDirectionValues).optional(),
+    ordinal: z.coerce.number().int().min(1).max(99).optional(),
+    qualifier: z.string().trim().max(120).optional(),
+    referenceLocationId: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.type === "WALL_ZONE") {
+      if (!value.wall) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["wall"], message: "Wall is required." });
+      }
+      if (!value.ordinal) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["ordinal"], message: "Ordinal is required." });
+      }
+    }
+
+    if (value.type === "FRONT_OF_ZONE") {
+      if (!value.referenceLocationId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["referenceLocationId"],
+          message: "Reference zone is required.",
+        });
+      }
+    }
+  });
+
+const deleteLocationDescriptorSchema = z.object({
+  workspaceId: z.string().min(1),
+  locationId: z.string().min(1),
+  descriptorId: z.string().min(1),
 });
 
 const createAssetSchema = z
@@ -69,6 +85,32 @@ const createAssetSchema = z
     assetCode: z.string().trim().min(2).max(32),
     nameEn: z.string().trim().max(120).optional(),
     nameZh: z.string().trim().max(120).optional(),
+    color: z.string().trim().max(80).optional(),
+    brand: z.string().trim().max(80).optional(),
+    model: z.string().trim().max(80).optional(),
+    description: z.string().trim().max(1000).optional(),
+    barcodeValue: z.string().trim().max(64).optional(),
+    barcodeFormat: z.string().trim().max(32).optional(),
+    barcodeSource: z.string().trim().max(64).optional(),
+    quantity: z.coerce.number().int().min(1).max(100000),
+    trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
+    sensitivityLevel: z.enum(["LOW", "MEDIUM"]),
+    notes: z.string().trim().max(1000).optional(),
+  })
+  .refine((value) => Boolean(value.nameEn || value.nameZh), {
+    message: "At least one of the English or Chinese names is required.",
+    path: ["nameEn"],
+  });
+
+const updateAssetSchema = z
+  .object({
+    assetId: z.string().min(1),
+    workspaceId: z.string().min(1),
+    currentLocationId: z.string().optional(),
+    assetCode: z.string().trim().min(2).max(32),
+    nameEn: z.string().trim().max(120).optional(),
+    nameZh: z.string().trim().max(120).optional(),
+    color: z.string().trim().max(80).optional(),
     brand: z.string().trim().max(80).optional(),
     model: z.string().trim().max(80).optional(),
     description: z.string().trim().max(1000).optional(),
@@ -93,6 +135,12 @@ const moveAssetSchema = z.object({
   note: z.string().trim().max(500).optional(),
 });
 
+function revalidateWorkspaceViews() {
+  revalidatePath("/locations");
+  revalidatePath("/dashboard");
+  revalidatePath("/assets");
+}
+
 export async function switchWorkspaceAction(formData: FormData) {
   const workspaceId = String(formData.get("workspaceId") || "");
   const cookieStore = await cookies();
@@ -110,7 +158,6 @@ export async function logoutAction() {
 }
 
 export async function createLocationAction(formData: FormData) {
-  const user = await requireUser();
   const parsed = createLocationSchema.parse({
     workspaceId: formData.get("workspaceId"),
     parentId: formData.get("parentId") || undefined,
@@ -139,8 +186,7 @@ export async function createLocationAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/locations");
-  revalidatePath("/dashboard");
+  revalidateWorkspaceViews();
   redirect("/locations");
 }
 
@@ -205,9 +251,7 @@ export async function moveLocationAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/locations");
-  revalidatePath("/dashboard");
-  revalidatePath("/assets");
+  revalidateWorkspaceViews();
   redirect("/locations");
 }
 
@@ -247,9 +291,132 @@ export async function updateLocationAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/locations");
-  revalidatePath("/dashboard");
-  revalidatePath("/assets");
+  revalidateWorkspaceViews();
+  redirect("/locations");
+}
+
+export async function addLocationDescriptorAction(formData: FormData) {
+  const parsed = addLocationDescriptorSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+    type: formData.get("type"),
+    wall: formData.get("wall") || undefined,
+    ordinal: formData.get("ordinal") || undefined,
+    qualifier: formData.get("qualifier") || undefined,
+    referenceLocationId: formData.get("referenceLocationId") || undefined,
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const location = await prisma.locationNode.findUnique({
+    where: { id: parsed.locationId },
+    select: { id: true, workspaceId: true },
+  });
+
+  if (!location || location.workspaceId !== parsed.workspaceId) {
+    throw new Error("Location not found.");
+  }
+
+  if (parsed.type === "FRONT_OF_ZONE" && parsed.referenceLocationId === parsed.locationId) {
+    throw new Error("A zone cannot be in front of itself.");
+  }
+
+  if (parsed.referenceLocationId) {
+    const referenceLocation = await prisma.locationNode.findUnique({
+      where: { id: parsed.referenceLocationId },
+      select: { id: true, workspaceId: true },
+    });
+
+    if (!referenceLocation || referenceLocation.workspaceId !== parsed.workspaceId) {
+      throw new Error("Reference zone not found.");
+    }
+  }
+
+  if (parsed.type === "WALL_ZONE" && parsed.wall) {
+    const existingWallDescriptor = await prisma.locationDescriptor.findFirst({
+      where: {
+        locationId: parsed.locationId,
+        wall: parsed.wall,
+      },
+      select: { id: true },
+    });
+
+    if (existingWallDescriptor) {
+      throw new Error("A descriptor for that wall already exists on this location.");
+    }
+  }
+
+  if (parsed.type === "FRONT_OF_ZONE" && parsed.referenceLocationId) {
+    const existingFrontDescriptor = await prisma.locationDescriptor.findFirst({
+      where: {
+        locationId: parsed.locationId,
+        referenceLocationId: parsed.referenceLocationId,
+      },
+      select: { id: true },
+    });
+
+    if (existingFrontDescriptor) {
+      throw new Error("That in-front-of descriptor already exists on this location.");
+    }
+  }
+
+  const descriptorCount = await prisma.locationDescriptor.count({
+    where: { locationId: parsed.locationId },
+  });
+
+  await prisma.locationDescriptor.create({
+    data: {
+      locationId: parsed.locationId,
+      type: parsed.type,
+      wall: parsed.type === "WALL_ZONE" ? parsed.wall ?? null : null,
+      ordinal: parsed.type === "WALL_ZONE" ? parsed.ordinal ?? null : null,
+      qualifier: parsed.qualifier || null,
+      referenceLocationId: parsed.type === "FRONT_OF_ZONE" ? parsed.referenceLocationId || null : null,
+      sortOrder: descriptorCount,
+    },
+  });
+
+  revalidateWorkspaceViews();
+  redirect("/locations");
+}
+
+export async function deleteLocationDescriptorAction(formData: FormData) {
+  const parsed = deleteLocationDescriptorSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+    descriptorId: formData.get("descriptorId"),
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const descriptor = await prisma.locationDescriptor.findUnique({
+    where: { id: parsed.descriptorId },
+    include: {
+      location: {
+        select: { workspaceId: true },
+      },
+    },
+  });
+
+  if (
+    !descriptor ||
+    descriptor.locationId !== parsed.locationId ||
+    descriptor.location.workspaceId !== parsed.workspaceId
+  ) {
+    throw new Error("Descriptor not found.");
+  }
+
+  await prisma.locationDescriptor.delete({
+    where: { id: parsed.descriptorId },
+  });
+
+  revalidateWorkspaceViews();
   redirect("/locations");
 }
 
@@ -261,6 +428,7 @@ export async function createAssetAction(formData: FormData) {
     assetCode: formData.get("assetCode"),
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
+    color: formData.get("color") || undefined,
     brand: formData.get("brand") || undefined,
     model: formData.get("model") || undefined,
     description: formData.get("description") || undefined,
@@ -286,6 +454,7 @@ export async function createAssetAction(formData: FormData) {
       assetCode: parsed.assetCode.toUpperCase(),
       nameEn: parsed.nameEn || null,
       nameZh: parsed.nameZh || null,
+      color: parsed.color || null,
       brand: parsed.brand || null,
       model: parsed.model || null,
       description: parsed.description || null,
@@ -310,10 +479,69 @@ export async function createAssetAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/assets");
-  revalidatePath("/dashboard");
-  revalidatePath("/locations");
+  revalidateWorkspaceViews();
   redirect(`/assets/${asset.id}`);
+}
+
+export async function updateAssetAction(formData: FormData) {
+  const parsed = updateAssetSchema.parse({
+    assetId: formData.get("assetId"),
+    workspaceId: formData.get("workspaceId"),
+    currentLocationId: formData.get("currentLocationId") || undefined,
+    assetCode: formData.get("assetCode"),
+    nameEn: formData.get("nameEn") || undefined,
+    nameZh: formData.get("nameZh") || undefined,
+    color: formData.get("color") || undefined,
+    brand: formData.get("brand") || undefined,
+    model: formData.get("model") || undefined,
+    description: formData.get("description") || undefined,
+    barcodeValue: formData.get("barcodeValue") || undefined,
+    barcodeFormat: formData.get("barcodeFormat") || undefined,
+    barcodeSource: formData.get("barcodeSource") || undefined,
+    quantity: formData.get("quantity"),
+    trackingMode: formData.get("trackingMode"),
+    sensitivityLevel: formData.get("sensitivityLevel"),
+    notes: formData.get("notes") || undefined,
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const asset = await prisma.asset.findUnique({
+    where: { id: parsed.assetId },
+    select: { id: true, workspaceId: true },
+  });
+
+  if (!asset || asset.workspaceId !== parsed.workspaceId) {
+    throw new Error("Asset not found.");
+  }
+
+  await prisma.asset.update({
+    where: { id: parsed.assetId },
+    data: {
+      currentLocationId: parsed.currentLocationId || null,
+      assetCode: parsed.assetCode.toUpperCase(),
+      nameEn: parsed.nameEn || null,
+      nameZh: parsed.nameZh || null,
+      color: parsed.color || null,
+      brand: parsed.brand || null,
+      model: parsed.model || null,
+      description: parsed.description || null,
+      barcodeValue: parsed.barcodeValue || null,
+      barcodeFormat: parsed.barcodeFormat || null,
+      barcodeSource: parsed.barcodeSource || (parsed.barcodeValue ? "manual-or-scan" : null),
+      quantity: parsed.quantity,
+      trackingMode: parsed.trackingMode,
+      sensitivityLevel: parsed.sensitivityLevel,
+      notes: parsed.notes || null,
+    },
+  });
+
+  revalidateWorkspaceViews();
+  revalidatePath(`/assets/${parsed.assetId}`);
+  redirect(`/assets/${parsed.assetId}`);
 }
 
 export async function moveAssetAction(formData: FormData) {
@@ -356,9 +584,6 @@ export async function moveAssetAction(formData: FormData) {
     },
   });
 
-  revalidatePath(`/assets/${parsed.assetId}`);
-  revalidatePath("/assets");
-  revalidatePath("/dashboard");
-  revalidatePath("/locations");
+  revalidateWorkspaceViews();
   redirect(`/assets/${parsed.assetId}`);
 }
