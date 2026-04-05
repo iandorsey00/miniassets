@@ -53,11 +53,11 @@ async function main() {
     },
   });
 
-  const shelf = await prisma.locationNode.create({
+  const area = await prisma.locationNode.create({
     data: {
       workspaceId: workspace.id,
       parentId: bedroom.id,
-      kind: "SHELF",
+      kind: "AREA",
       nameEn: "Temporary Squares",
       nameZh: "临时方格",
       sortOrder: 0,
@@ -68,7 +68,7 @@ async function main() {
     data: {
       workspaceId: workspace.id,
       createdByUserId: admin.id,
-      currentLocationId: shelf.id,
+      currentLocationId: area.id,
       assetCode: "AST-0001",
       nameEn: "Charging cables",
       nameZh: "充电线",
@@ -80,7 +80,7 @@ async function main() {
       placements: {
         create: {
           movedByUserId: admin.id,
-          locationId: shelf.id,
+          locationId: area.id,
           confidence: "VERIFIED",
           note: "Seed placement",
         },

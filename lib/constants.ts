@@ -23,11 +23,10 @@ export const locationNodeTypeValues = [
   "FLOOR",
   "ROOM",
   "AREA",
-  "STORAGE",
-  "SHELF",
+  "CABINET",
   "DRAWER",
-  "BIN",
-  "BOX",
+  "SHELF",
+  "CONTAINER",
   "ROW",
   "COLUMN",
   "POSITION",
@@ -59,23 +58,75 @@ export const localeTokenMap: Record<(typeof localeValues)[number], string> = {
   EN: "en",
 };
 
+export type LocationKind = (typeof locationNodeTypeValues)[number];
+
 export const locationKindLabels: Record<
-  (typeof locationNodeTypeValues)[number],
+  LocationKind,
   { zh: string; en: string }
 > = {
   HOUSE: { zh: "房屋", en: "House" },
   FLOOR: { zh: "楼层", en: "Floor" },
   ROOM: { zh: "房间", en: "Room" },
   AREA: { zh: "区域", en: "Area" },
-  STORAGE: { zh: "储物单元", en: "Storage" },
-  SHELF: { zh: "层架", en: "Shelf" },
+  CABINET: { zh: "柜体", en: "Cabinet" },
   DRAWER: { zh: "抽屉", en: "Drawer" },
-  BIN: { zh: "收纳盒", en: "Bin" },
-  BOX: { zh: "箱子", en: "Box" },
+  SHELF: { zh: "层架", en: "Shelf" },
+  CONTAINER: { zh: "容器", en: "Container" },
   ROW: { zh: "行", en: "Row" },
   COLUMN: { zh: "列", en: "Column" },
   POSITION: { zh: "位置", en: "Position" },
 };
+
+export const topLevelLocationKinds = ["HOUSE"] as const;
+
+export const numericCodeLocationKinds = ["CABINET", "DRAWER", "ROW", "COLUMN"] as const;
+
+export const locationChildKindMap = {
+  ROOT: ["HOUSE"],
+  HOUSE: ["FLOOR", "ROOM", "AREA"],
+  FLOOR: ["ROOM", "AREA"],
+  ROOM: ["AREA", "CABINET", "DRAWER", "SHELF", "CONTAINER"],
+  AREA: ["AREA", "CABINET", "DRAWER", "SHELF", "CONTAINER", "ROW", "COLUMN", "POSITION"],
+  CABINET: ["DRAWER", "SHELF", "CONTAINER", "ROW", "COLUMN", "POSITION"],
+  DRAWER: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
+  SHELF: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
+  CONTAINER: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
+  ROW: ["COLUMN", "POSITION"],
+  COLUMN: ["POSITION"],
+  POSITION: [],
+} as const satisfies Record<string, readonly string[]>;
+
+export const locationKindGroupMap = {
+  STRUCTURE: ["HOUSE", "FLOOR", "ROOM", "AREA"],
+  STORAGE: ["CABINET", "DRAWER", "SHELF", "CONTAINER"],
+  COORDINATES: ["ROW", "COLUMN", "POSITION"],
+} as const satisfies Record<string, readonly LocationKind[]>;
+
+export function getAllowedLocationKindsByGroup(parentKind: LocationKind | null) {
+  const allowedKinds = getAllowedLocationKinds(parentKind);
+
+  return Object.entries(locationKindGroupMap)
+    .map(([group, kinds]) => ({
+      group,
+      kinds: kinds.filter((kind) => allowedKinds.includes(kind)),
+    }))
+    .filter((entry) => entry.kinds.length);
+}
+
+export function getAllowedLocationKinds(parentKind: LocationKind | null) {
+  return (parentKind ? locationChildKindMap[parentKind] : locationChildKindMap.ROOT) as readonly LocationKind[];
+}
+
+export function isLocationKindAllowedUnderParent(
+  parentKind: LocationKind | null,
+  childKind: LocationKind,
+) {
+  return getAllowedLocationKinds(parentKind).includes(childKind);
+}
+
+export function isNumericCodeLocationKind(kind: LocationKind) {
+  return (numericCodeLocationKinds as readonly string[]).includes(kind);
+}
 
 export const locationDescriptorTypeLabels = {
   WALL_ZONE: { zh: "墙面区域", en: "Wall zone" },

@@ -189,11 +189,145 @@ Recommended:
 - durable path segments
 - minimal ambiguity
 
-Example structural pattern:
+Recommended core structural types:
 
-- `House > Room > Area > Storage > Row > Column`
+- `House`
+- `Floor`
+- `Room`
+- `Area`
+- `Cabinet`
+- `Drawer`
+- `Shelf`
+- `Container`
+- `Row`
+- `Column`
+- `Position`
+
+Recommended structural pattern:
+
+- `House > Floor > Room > Area`
+
+Then add more granular structure only where needed:
+
+- `Area > Cabinet`
+- `Area > Drawer`
+- `Area > Shelf`
+- `Area > Container`
+- `Area > Row`
+- `Area > Column`
+- `Area > Position`
+- `Cabinet > Drawer`
+- `Cabinet > Shelf`
+- `Cabinet > Container`
+- `Drawer > Container`
+- `Shelf > Container`
+- `Container > Container`
+- `Cabinet > Row`
+- `Cabinet > Column`
+- `Cabinet > Position`
+- `Drawer > Row`
+- `Drawer > Column`
+- `Drawer > Position`
+- `Row > Column`
+- `Row > Position`
+- `Column > Position`
 
 The path should be the primary placement reference.
+
+### Parent-Child Rules
+
+The system should constrain child types based on the selected parent.
+
+Recommended:
+
+- root level should default to `House`
+- `House` may contain `Floor`, `Room`, or `Area`
+- `Floor` may contain `Room` or `Area`
+- `Room` may contain `Area`, `Cabinet`, or `Drawer`
+- `Room` may also contain `Shelf` or `Container` when needed
+- `Area` may contain `Area`, `Cabinet`, `Drawer`, `Shelf`, `Container`, `Row`, `Column`, or `Position`
+- `Cabinet` may contain `Drawer`, `Shelf`, `Container`, `Row`, `Column`, or `Position`
+- `Drawer` may contain `Container`, `Row`, `Column`, or `Position`
+- `Shelf` may contain `Container`, `Row`, `Column`, or `Position`
+- `Container` may contain `Container`, `Row`, `Column`, or `Position`
+- `Row` may contain `Column` or `Position`
+- `Column` may contain `Position`
+- `Position` should be a leaf in normal usage
+
+This keeps the hierarchy consistent while still allowing practical household modeling.
+
+### Numeric Code Rules
+
+For consistency, some structural types should use numeric codes only.
+
+Recommended numeric-only types:
+
+- `Cabinet`
+- `Drawer`
+- `Row`
+- `Column`
+
+Recommended flexible-name types:
+
+- `Area`
+- `Shelf`
+- `Container`
+- `Position`
+
+Examples:
+
+- `Cabinet 1`
+- `Drawer 2`
+- `Row 3`
+- `Column 4`
+
+The semantic meaning should usually live in the parent `Area`, not in ad hoc numbering schemes scattered across mixed node types.
+
+Examples:
+
+- `Kitchen > Sink area > Cabinet 1 > Drawer 2`
+- `Kitchen > Upper cabinet area > Row 1 > Column 2`
+- `Bathroom > Mirror cabinet area > Position: Top`
+- `Kitchen > Chrome rack area > Shelf 3 > Container 1`
+
+### Area And Position Guidance
+
+`Area` should carry most human-meaningful spatial semantics.
+
+Recommended uses for `Area`:
+
+- cooking area
+- sink area
+- upper cabinet area
+- lower cabinet area
+- counter area
+- mirror cabinet area
+
+`Position` should remain flexible.
+
+It may use controlled conventional labels such as:
+
+- `Top`
+- `Bottom`
+- `Left`
+- `Right`
+- `Center`
+- `Front`
+- `Back`
+
+But it should not be restricted only to those values if the household requires a more specific leaf label.
+
+### UI Guidance
+
+To keep entry user-friendly, the type picker should not feel like a raw enum list.
+
+Recommended grouping:
+
+- structure
+- storage
+- coordinates
+
+The available types should narrow automatically based on the selected parent, and the grouped presentation should make the structural rules easier to understand at a glance.
 
 ## Zone Descriptor Standards
 

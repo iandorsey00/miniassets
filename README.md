@@ -13,6 +13,7 @@ Bilingual household asset management for low-to-medium secrecy items, built arou
 - Grouped-item support when per-item detail is unrealistic
 - Movement history with verified, assumed, or reported confidence
 - AI-friendly JSON export for external analysis and reorganization workflows
+- Structured location standards with constrained parent-child types and standardized numeric substructures
 
 ## Development
 

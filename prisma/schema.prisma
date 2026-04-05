@@ -45,11 +45,10 @@ enum LocationNodeType {
   FLOOR
   ROOM
   AREA
-  STORAGE
-  SHELF
+  CABINET
   DRAWER
-  BIN
-  BOX
+  SHELF
+  CONTAINER
   ROW
   COLUMN
   POSITION

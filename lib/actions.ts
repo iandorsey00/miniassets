@@ -7,6 +7,9 @@ import { z } from "zod";
 
 import { getMiniAuthLogoutUrl, requireUser, revokeMiniAuthSession } from "@/lib/auth";
 import {
+  getAllowedLocationKinds,
+  isLocationKindAllowedUnderParent,
+  isNumericCodeLocationKind,
   locationDescriptorTypeValues,
   locationNodeTypeValues,
   wallDirectionValues,
@@ -147,6 +150,30 @@ function revalidateWorkspaceViews() {
   revalidatePath("/assets");
 }
 
+function normalizeLocationCode(value: string | undefined) {
+  return value?.trim() || "";
+}
+
+function validateLocationKindAndCode(
+  parentKind: (typeof locationNodeTypeValues)[number] | null,
+  kind: (typeof locationNodeTypeValues)[number],
+  code: string | undefined,
+) {
+  if (!isLocationKindAllowedUnderParent(parentKind, kind)) {
+    throw new Error("That location type is not allowed under the selected parent.");
+  }
+
+  const normalizedCode = normalizeLocationCode(code);
+  if (isNumericCodeLocationKind(kind)) {
+    if (!normalizedCode) {
+      throw new Error("Cabinet, drawer, row, and column entries require a numeric code.");
+    }
+    if (!/^\d+$/.test(normalizedCode)) {
+      throw new Error("Cabinet, drawer, row, and column codes must be numeric.");
+    }
+  }
+}
+
 function collapseWhitespace(value: string | undefined) {
   return value?.replace(/\s+/g, " ").trim() || "";
 }
@@ -258,6 +285,19 @@ export async function createLocationAction(formData: FormData) {
     throw new Error("Workspace access denied.");
   }
 
+  const parent = parsed.parentId
+    ? await prisma.locationNode.findUnique({
+        where: { id: parsed.parentId },
+        select: { id: true, workspaceId: true, kind: true },
+      })
+    : null;
+
+  if (parsed.parentId && (!parent || parent.workspaceId !== parsed.workspaceId)) {
+    throw new Error("Parent location not found.");
+  }
+
+  validateLocationKindAndCode(parent?.kind ?? null, parsed.kind, parsed.code);
+
   await prisma.locationNode.create({
     data: {
       workspaceId: parsed.workspaceId,
@@ -309,7 +349,7 @@ export async function moveLocationAction(formData: FormData) {
 
   const locations = await prisma.locationNode.findMany({
     where: { workspaceId: parsed.workspaceId },
-    select: { id: true, parentId: true },
+    select: { id: true, parentId: true, kind: true },
   });
 
   const location = locations.find((item) => item.id === parsed.locationId);
@@ -327,6 +367,16 @@ export async function moveLocationAction(formData: FormData) {
     if (descendants.has(nextParentId)) {
       throw new Error("A location cannot be moved under itself or one of its descendants.");
     }
+  }
+
+  const nextParent = nextParentId ? locations.find((item) => item.id === nextParentId) : null;
+  if (nextParentId && !nextParent) {
+    throw new Error("Parent location not found.");
+  }
+
+  const nextParentKind = nextParent?.kind ?? null;
+  if (!isLocationKindAllowedUnderParent(nextParentKind, location.kind)) {
+    throw new Error("That location type is not allowed under the selected parent.");
   }
 
   await prisma.locationNode.update({
@@ -358,11 +408,26 @@ export async function updateLocationAction(formData: FormData) {
 
   const existingLocation = await prisma.locationNode.findUnique({
     where: { id: parsed.locationId },
-    select: { id: true, workspaceId: true },
+    include: {
+      parent: {
+        select: { kind: true },
+      },
+      children: {
+        select: { kind: true },
+      },
+    },
   });
 
   if (!existingLocation || existingLocation.workspaceId !== parsed.workspaceId) {
     throw new Error("Location not found.");
+  }
+
+  validateLocationKindAndCode(existingLocation.parent?.kind ?? null, parsed.kind, parsed.code);
+
+  const allowedChildKinds = getAllowedLocationKinds(parsed.kind);
+  const invalidChild = existingLocation.children.find((child) => !allowedChildKinds.includes(child.kind));
+  if (invalidChild) {
+    throw new Error("That location type would invalidate one or more child locations.");
   }
 
   await prisma.locationNode.update({

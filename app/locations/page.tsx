@@ -1,11 +1,12 @@
 import {
   addLocationDescriptorAction,
-  createLocationAction,
   deleteLocationDescriptorAction,
   moveLocationAction,
   updateLocationAction,
 } from "@/lib/actions";
 import {
+  getAllowedLocationKinds,
+  isNumericCodeLocationKind,
   locationDescriptorTypeLabels,
   locationDescriptorTypeValues,
   locationKindLabels,
@@ -15,13 +16,64 @@ import {
 import { buildLocationPath, getLocationsData } from "@/lib/data";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { pickLocalizedText } from "@/lib/present";
+import { LocationCreateForm } from "@/components/location-create-form";
 import { PageHeader, Panel } from "@/components/ui";
+
+const wallSortOrder = {
+  NORTH: 0,
+  EAST: 1,
+  SOUTH: 2,
+  WEST: 3,
+} as const;
+
+function compareLocations(
+  left: Awaited<ReturnType<typeof getLocationsData>>["locations"][number],
+  right: Awaited<ReturnType<typeof getLocationsData>>["locations"][number],
+  locale: "ZH_CN" | "EN",
+) {
+  const leftWallDescriptor = left.descriptors.find((descriptor) => descriptor.type === "WALL_ZONE" && descriptor.wall && descriptor.ordinal);
+  const rightWallDescriptor = right.descriptors.find((descriptor) => descriptor.type === "WALL_ZONE" && descriptor.wall && descriptor.ordinal);
+
+  if (leftWallDescriptor || rightWallDescriptor) {
+    if (!leftWallDescriptor) return 1;
+    if (!rightWallDescriptor) return -1;
+
+    const leftWall = leftWallDescriptor.wall!;
+    const rightWall = rightWallDescriptor.wall!;
+    const wallDelta =
+      wallSortOrder[leftWall] - wallSortOrder[rightWall];
+    if (wallDelta !== 0) {
+      return wallDelta;
+    }
+
+    const ordinalDelta = (leftWallDescriptor.ordinal ?? 0) - (rightWallDescriptor.ordinal ?? 0);
+    if (ordinalDelta !== 0) {
+      return ordinalDelta;
+    }
+  }
+
+  const leftFrontDescriptor = left.descriptors.find((descriptor) => descriptor.type === "FRONT_OF_ZONE");
+  const rightFrontDescriptor = right.descriptors.find((descriptor) => descriptor.type === "FRONT_OF_ZONE");
+  if (leftFrontDescriptor || rightFrontDescriptor) {
+    if (!leftFrontDescriptor) return 1;
+    if (!rightFrontDescriptor) return -1;
+  }
+
+  const leftLabel = pickLocalizedText(locale, left) || left.code || left.id;
+  const rightLabel = pickLocalizedText(locale, right) || right.code || right.id;
+  return leftLabel.localeCompare(rightLabel, locale === "ZH_CN" ? "zh-CN" : "en", {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
 
 function renderTree(
   parentId: string | null,
   data: Awaited<ReturnType<typeof getLocationsData>>,
 ): React.ReactNode {
-  const nodes = data.locations.filter((location) => location.parentId === parentId);
+  const nodes = data.locations
+    .filter((location) => location.parentId === parentId)
+    .sort((left, right) => compareLocations(left, right, data.locale));
   if (!nodes.length) {
     return null;
   }
@@ -30,6 +82,9 @@ function renderTree(
     <div className="tree-list">
       {nodes.map((location) => {
         const descriptorOptions = data.locations.filter((item) => item.id !== location.id);
+        const parentKind = data.locations.find((item) => item.id === location.parentId)?.kind ?? null;
+        const allowedKinds = getAllowedLocationKinds(parentKind);
+        const numericCode = isNumericCodeLocationKind(location.kind);
 
         return (
           <details key={location.id} className="tree-node">
@@ -74,9 +129,9 @@ function renderTree(
                   <div className="field-stack">
                     <label htmlFor={`kind-${location.id}`}>{data.dictionary.locations.type}</label>
                     <select id={`kind-${location.id}`} name="kind" defaultValue={location.kind}>
-                      {Object.entries(locationKindLabels).map(([key, value]) => (
+                      {allowedKinds.map((key) => (
                         <option key={key} value={key}>
-                          {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                          {locationKindLabels[key][data.locale === "ZH_CN" ? "zh" : "en"]}
                         </option>
                       ))}
                     </select>
@@ -84,7 +139,14 @@ function renderTree(
 
                   <div className="field-stack">
                     <label htmlFor={`code-${location.id}`}>{data.dictionary.locations.code}</label>
-                    <input id={`code-${location.id}`} name="code" defaultValue={location.code ?? ""} />
+                    <input
+                      id={`code-${location.id}`}
+                      name="code"
+                      defaultValue={location.code ?? ""}
+                      inputMode={numericCode ? "numeric" : undefined}
+                      pattern={numericCode ? "[0-9]*" : undefined}
+                    />
+                    {numericCode ? <p className="muted">{data.dictionary.locations.numericCodeHint}</p> : null}
                   </div>
 
                   <div className="field-stack">
@@ -191,6 +253,15 @@ export default async function LocationsPage({
 }) {
   const params = await searchParams;
   const data = await getLocationsData(params.workspaceId);
+  const locationOptions = data.locations.map((location) => ({
+    id: location.id,
+    kind: location.kind,
+    label:
+      buildLocationPath(data.locations, location.id, data.locale) ||
+      pickLocalizedText(data.locale, location) ||
+      location.code ||
+      location.id,
+  }));
 
   return (
     <>
@@ -198,56 +269,30 @@ export default async function LocationsPage({
 
       <div className="grid-2">
         <Panel title={data.dictionary.locations.createTitle}>
-          <form action={createLocationAction} className="form-grid">
-            <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
-
-            <div className="field-stack">
-              <label htmlFor="parentId">{data.dictionary.locations.parent}</label>
-              <select id="parentId" name="parentId" defaultValue="">
-                <option value="">{data.dictionary.locations.topLevel}</option>
-                {data.locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {pickLocalizedText(data.locale, location) || location.code || location.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="kind">{data.dictionary.locations.type}</label>
-              <select id="kind" name="kind" defaultValue="ROOM">
-                {Object.entries(locationKindLabels).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="nameEn">{data.dictionary.common.englishName}</label>
-              <input id="nameEn" name="nameEn" />
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="nameZh">{data.dictionary.common.chineseName}</label>
-              <input id="nameZh" name="nameZh" />
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="code">{data.dictionary.locations.code}</label>
-              <input id="code" name="code" placeholder="R1-C2" />
-            </div>
-
-            <div className="field-stack full-span">
-              <label htmlFor="notes">{data.dictionary.common.notes}</label>
-              <textarea id="notes" name="notes" />
-            </div>
-
-            <div className="full-span">
-              <button type="submit">{data.dictionary.common.create}</button>
-            </div>
-          </form>
+          <LocationCreateForm
+            workspaceId={data.currentWorkspace?.id ?? ""}
+            locale={data.locale}
+            dictionary={{
+              common: {
+                englishName: data.dictionary.common.englishName,
+                chineseName: data.dictionary.common.chineseName,
+                notes: data.dictionary.common.notes,
+                create: data.dictionary.common.create,
+              },
+              locations: {
+                parent: data.dictionary.locations.parent,
+                type: data.dictionary.locations.type,
+                code: data.dictionary.locations.code,
+                topLevel: data.dictionary.locations.topLevel,
+                numericCodeHint: data.dictionary.locations.numericCodeHint,
+                typeHelp: data.dictionary.locations.typeHelp,
+                typeGroupStructure: data.dictionary.locations.typeGroupStructure,
+                typeGroupStorage: data.dictionary.locations.typeGroupStorage,
+                typeGroupCoordinates: data.dictionary.locations.typeGroupCoordinates,
+              },
+            }}
+            locations={locationOptions}
+          />
         </Panel>
 
         <Panel title={data.dictionary.locations.moveTitle}>
@@ -295,6 +340,7 @@ export default async function LocationsPage({
         <div className="full-span">
           <Panel title={data.dictionary.locations.title}>
             <p className="muted">{data.dictionary.locations.standardHint}</p>
+            <p className="muted">{data.dictionary.locations.numericCodeHint}</p>
             {renderTree(null, data)}
           </Panel>
         </div>
