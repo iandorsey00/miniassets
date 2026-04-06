@@ -9,6 +9,8 @@ ENV_FILE="${ENV_FILE:-/var/www/miniassets/.env.production}"
 DEPLOY_ENV_FILE="${DEPLOY_ENV_FILE:-$APP_DIR/.env.deploy}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
 SKIP_DB_APPLY="${SKIP_DB_APPLY:-false}"
+HEALTHCHECK_RETRIES="${HEALTHCHECK_RETRIES:-12}"
+HEALTHCHECK_DELAY_SECONDS="${HEALTHCHECK_DELAY_SECONDS:-2}"
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1"
@@ -33,6 +35,28 @@ restore_server_package_drift() {
     log "Restoring server-local $file changes before pull"
     git restore "$file"
   done
+}
+
+run_healthcheck_with_retry() {
+  local attempt=1
+
+  while (( attempt <= HEALTHCHECK_RETRIES )); do
+    if curl --fail --silent --show-error "$HEALTHCHECK_URL"; then
+      echo
+      return 0
+    fi
+
+    if (( attempt == HEALTHCHECK_RETRIES )); then
+      break
+    fi
+
+    log "Health check not ready yet (attempt $attempt/$HEALTHCHECK_RETRIES). Waiting ${HEALTHCHECK_DELAY_SECONDS}s."
+    sleep "$HEALTHCHECK_DELAY_SECONDS"
+    attempt=$((attempt + 1))
+  done
+
+  echo "Health check failed after ${HEALTHCHECK_RETRIES} attempts: $HEALTHCHECK_URL"
+  return 1
 }
 
 if [[ -f "$DEPLOY_ENV_FILE" ]]; then
@@ -93,8 +117,7 @@ sudo systemctl --no-pager --full status "$SERVICE_NAME"
 
 if [[ -n "$HEALTHCHECK_URL" ]]; then
   log "Running health check: $HEALTHCHECK_URL"
-  curl --fail --silent --show-error "$HEALTHCHECK_URL"
-  echo
+  run_healthcheck_with_retry
 fi
 
 log "Deploy complete"

@@ -75,7 +75,11 @@ Useful deploy env values:
 - `SERVICE_NAME`
 - `APP_URL`
 - optional `HEALTHCHECK_URL`
+- optional `HEALTHCHECK_RETRIES`
+- optional `HEALTHCHECK_DELAY_SECONDS`
 - optional `SKIP_DB_APPLY=true` for a release that truly has no schema changes
+
+The deploy script treats health checks as readiness checks, not single-shot probes. By default it will retry the health endpoint `12` times with a `2` second delay between attempts before failing the deploy.
 
 ## Health check
 
