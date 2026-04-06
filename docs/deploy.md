@@ -56,7 +56,26 @@ The script expects a server-local deploy env file and will:
 - apply the schema
 - build the app
 - restart the systemd service
-- optionally run a final health check if `HEALTHCHECK_URL` is set
+- automatically restore droplet-local `package.json` and `package-lock.json` drift before pull
+- automatically run a final health check if `APP_URL` or `HEALTHCHECK_URL` is set
+
+Recommended production usage:
+
+```bash
+cd /var/www/miniassets/app
+bash scripts/deploy.sh
+```
+
+Useful deploy env values:
+
+- `APP_DIR`
+- `BRANCH`
+- `ENV_FILE`
+- `NODE_BIN_DIR`
+- `SERVICE_NAME`
+- `APP_URL`
+- optional `HEALTHCHECK_URL`
+- optional `SKIP_DB_APPLY=true` for a release that truly has no schema changes
 
 ## Health check
 

@@ -29,3 +29,4 @@ Bilingual household asset management for low-to-medium secrecy items, built arou
 - The shared visual baseline lives in `app/minitickets-foundation.css`, with MiniAssets-specific additions layered in `app/globals.css`.
 - Footer copy follows the family convention: `MiniAssets © {year} Ian Dorsey · Open source under the MIT License`.
 - Generalized cataloging and placement standards live in [docs/asset-data-standards.md](/Users/iandorsey/dev/miniassets/docs/asset-data-standards.md).
+- Production deploys should use [scripts/deploy.sh](/Users/iandorsey/dev/miniassets/scripts/deploy.sh) rather than ad hoc shell history.

@@ -1,3 +1,4 @@
+import { capacityUnitLabels, netWeightUnitLabels } from "@/lib/constants";
 import type { AppLocale } from "@/lib/i18n";
 
 export function pickLocalizedText(
@@ -29,6 +30,19 @@ export function normalizeBarcode(input: string) {
   return input.replace(/[^0-9A-Za-z]/g, "").trim();
 }
 
+function formatMeasurement(
+  locale: AppLocale,
+  value: number | null | undefined,
+  unit: string | null | undefined,
+  labels: Record<string, { zh: string; en: string }>,
+) {
+  if (!value || !unit || !labels[unit]) {
+    return "";
+  }
+
+  return `${value} ${labels[unit][locale === "ZH_CN" ? "zh" : "en"]}`;
+}
+
 export function formatAssetLabel(
   locale: AppLocale,
   values: {
@@ -43,6 +57,10 @@ export function formatAssetLabel(
     variantZh?: string | null;
     subvariant?: string | null;
     subvariantZh?: string | null;
+    capacityValue?: number | null;
+    capacityUnit?: string | null;
+    netWeightValue?: number | null;
+    netWeightUnit?: string | null;
     assetCode?: string | null;
   },
   options?: { includeModel?: boolean },
@@ -53,6 +71,8 @@ export function formatAssetLabel(
     locale === "ZH_CN"
       ? values.subvariantZh?.trim() || values.subvariant?.trim() || ""
       : values.subvariant?.trim() || values.subvariantZh?.trim() || "";
+  const capacity = formatMeasurement(locale, values.capacityValue, values.capacityUnit, capacityUnitLabels);
+  const netWeight = formatMeasurement(locale, values.netWeightValue, values.netWeightUnit, netWeightUnitLabels);
   const segments = [
     pickLocalizedText(locale, values),
     primaryColor,
@@ -61,6 +81,8 @@ export function formatAssetLabel(
     variant,
     subvariant,
     options?.includeModel ? values.model?.trim() || "" : "",
+    capacity,
+    netWeight,
   ].filter(Boolean);
 
   return segments.join(", ") || values.assetCode?.trim() || "";
