@@ -176,6 +176,11 @@ export const trackingModeLabels = {
   GROUP: { zh: "分组", en: "Group" },
 } as const;
 
+export const assetUsageStateLabels = {
+  STORAGE: { zh: "储存中", en: "Storage" },
+  IN_USE: { zh: "使用中", en: "In use" },
+} as const;
+
 export const assetStatusLabels = {
   ACTIVE: { zh: "在管", en: "Active" },
   MISSING: { zh: "待寻找", en: "Missing" },

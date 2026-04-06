@@ -1,8 +1,11 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { AssetLocationField } from "@/components/asset-location-field";
+import { AssetShareActions } from "@/components/asset-share-actions";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
 import { moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
   assetStatusLabels,
+  assetUsageStateLabels,
   commonColorValues,
   placementConfidenceLabels,
   sensitivityLabels,
@@ -32,12 +35,62 @@ export default async function AssetDetailPage({
     subvariants: [],
     barcodeSources: [],
   };
+  const locationOptions = data.locations.map((location) => ({
+    id: location.id,
+    path: buildLocationPath(data.locations, location.id, data.locale) || location.code || location.id,
+    code: location.code,
+    nameEn: location.nameEn,
+    nameZh: location.nameZh,
+  }));
+  const shareLocationPath = data.locationPath || data.dictionary.assets.currentLocationFallback;
+  const shareAssetInfo = [
+    `${data.dictionary.common.itemCode}: ${data.asset.assetCode}`,
+    `${data.dictionary.common.englishName}: ${data.asset.nameEn || "-"}`,
+    `${data.dictionary.common.chineseName}: ${data.asset.nameZh || "-"}`,
+    `${data.dictionary.common.location}: ${shareLocationPath}`,
+    `${data.dictionary.common.trackingMode}: ${trackingModeLabels[data.asset.trackingMode][data.locale === "ZH_CN" ? "zh" : "en"]}`,
+    `${data.dictionary.common.usageState}: ${data.asset.usageState ? assetUsageStateLabels[data.asset.usageState][data.locale === "ZH_CN" ? "zh" : "en"] : "-"}`,
+    `${data.dictionary.common.lowStock}: ${data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}`,
+    `${data.dictionary.common.quantity}: ${data.asset.quantity}`,
+    `${data.dictionary.common.sensitivity}: ${sensitivityLabels[data.asset.sensitivityLevel][data.locale === "ZH_CN" ? "zh" : "en"]}`,
+    `${data.dictionary.common.status}: ${assetStatusLabels[data.asset.status][data.locale === "ZH_CN" ? "zh" : "en"]}`,
+    `${data.dictionary.common.primaryColor}: ${data.asset.primaryColor || data.asset.color || "-"}`,
+    `${data.dictionary.common.secondaryColor}: ${data.asset.secondaryColor || "-"}`,
+    `${data.dictionary.common.brand}: ${data.asset.brand || "-"}`,
+    `${data.dictionary.common.model}: ${data.asset.model || "-"}`,
+    `${data.dictionary.common.variant}: ${data.asset.variant || "-"}`,
+    `${data.dictionary.common.subvariant}: ${data.asset.subvariant || "-"}`,
+    `${data.dictionary.common.barcode}: ${data.asset.barcodeValue || "-"}`,
+    `${data.dictionary.common.barcodeFormat}: ${data.asset.barcodeFormat || "-"}`,
+    `${data.dictionary.common.barcodeSource}: ${data.asset.barcodeSource || "-"}`,
+    `${data.dictionary.common.lastVerified}: ${formatDateTime(data.asset.lastVerifiedAt, data.localeCode)}`,
+    `${data.dictionary.common.description}: ${data.asset.description || "-"}`,
+    `${data.dictionary.common.notes}: ${data.asset.notes || "-"}`,
+    "",
+    `${data.dictionary.assets.movementTitle}:`,
+    ...data.asset.placements.map(
+      (placement) =>
+        `- ${placement.locationId ? buildLocationPath(data.locations, placement.locationId, data.locale) : data.dictionary.assets.currentLocationFallback} | ${placementConfidenceLabels[placement.confidence][data.locale === "ZH_CN" ? "zh" : "en"]} | ${formatDateTime(placement.movedAt, data.localeCode)}${placement.note ? ` | ${placement.note}` : ""}`,
+    ),
+  ].join("\n");
 
   return (
     <>
       <PageHeader
         title={formatAssetLabel(data.locale, data.asset)}
         subtitle={data.locationPath || data.dictionary.assets.currentLocationFallback}
+        action={
+          <AssetShareActions
+            locationPath={shareLocationPath}
+            assetInfo={shareAssetInfo}
+            labels={{
+              copyLocationPath: data.dictionary.assets.copyLocationPath,
+              copyAssetInfo: data.dictionary.assets.copyAssetInfo,
+              copiedLocationPath: data.dictionary.assets.copiedLocationPath,
+              copiedAssetInfo: data.dictionary.assets.copiedAssetInfo,
+            }}
+          />
+        }
       />
 
       <div className="grid-2">
@@ -57,6 +110,18 @@ export default async function AssetDetailPage({
             <div className="split-line">
               <span>{data.dictionary.common.trackingMode}</span>
               <span>{trackingModeLabels[data.asset.trackingMode][data.locale === "ZH_CN" ? "zh" : "en"]}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.usageState}</span>
+              <span>
+                {data.asset.usageState
+                  ? assetUsageStateLabels[data.asset.usageState][data.locale === "ZH_CN" ? "zh" : "en"]
+                  : "-"}
+              </span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.lowStock}</span>
+              <span>{data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.quantity}</span>
@@ -126,17 +191,23 @@ export default async function AssetDetailPage({
             <form action={moveAssetAction} className="form-grid">
               <input type="hidden" name="assetId" value={data.asset.id} />
 
-              <div className="field-stack">
-                <label htmlFor="locationId">{data.dictionary.common.location}</label>
-                <select id="locationId" name="locationId" defaultValue={data.asset.currentLocationId ?? ""}>
-                  <option value="">{data.dictionary.assets.currentLocationFallback}</option>
-                  {data.locations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {buildLocationPath(data.locations, location.id, data.locale)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AssetLocationField
+                inputId="locationId"
+                inputName="locationId"
+                label={data.dictionary.common.location}
+                defaultLocationId={data.asset.currentLocationId}
+                emptyLabel={data.dictionary.assets.currentLocationFallback}
+                options={locationOptions}
+                storageKey={`miniassets:asset-move-location:${data.asset.id}`}
+                labels={{
+                  placeholder: data.dictionary.assets.locationPickerPlaceholder,
+                  help: data.dictionary.assets.locationPickerHelp,
+                  matched: data.dictionary.assets.locationPickerMatched,
+                  unresolved: data.dictionary.assets.locationPickerUnresolved,
+                  advanced: data.dictionary.assets.locationPickerAdvanced,
+                  locationId: data.dictionary.assets.locationPickerLocationId,
+                }}
+              />
 
               <div className="field-stack">
                 <label htmlFor="status">{data.dictionary.common.status}</label>
@@ -202,17 +273,23 @@ export default async function AssetDetailPage({
               <input id="assetCode" name="assetCode" defaultValue={data.asset.assetCode} required />
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="currentLocationId">{data.dictionary.common.location}</label>
-              <select id="currentLocationId" name="currentLocationId" defaultValue={data.asset.currentLocationId ?? ""}>
-                <option value="">{data.dictionary.assets.currentLocationFallback}</option>
-                {data.locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {buildLocationPath(data.locations, location.id, data.locale)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AssetLocationField
+              inputId="currentLocationId"
+              inputName="currentLocationId"
+              label={data.dictionary.common.location}
+              defaultLocationId={data.asset.currentLocationId}
+              emptyLabel={data.dictionary.assets.currentLocationFallback}
+              options={locationOptions}
+              storageKey={`miniassets:asset-edit-location:${data.asset.id}`}
+              labels={{
+                placeholder: data.dictionary.assets.locationPickerPlaceholder,
+                help: data.dictionary.assets.locationPickerHelp,
+                matched: data.dictionary.assets.locationPickerMatched,
+                unresolved: data.dictionary.assets.locationPickerUnresolved,
+                advanced: data.dictionary.assets.locationPickerAdvanced,
+                locationId: data.dictionary.assets.locationPickerLocationId,
+              }}
+            />
 
             <div className="field-stack">
               <label htmlFor="nameEn">{data.dictionary.common.englishName}</label>
@@ -301,6 +378,18 @@ export default async function AssetDetailPage({
             </div>
 
             <div className="field-stack">
+              <label htmlFor="usageState">{data.dictionary.common.usageState}</label>
+              <select id="usageState" name="usageState" defaultValue={data.asset.usageState ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                {Object.entries(assetUsageStateLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
               <label htmlFor="quantity">{data.dictionary.common.quantity}</label>
               <input id="quantity" name="quantity" type="number" min="1" defaultValue={data.asset.quantity} />
             </div>
@@ -314,6 +403,19 @@ export default async function AssetDetailPage({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="field-stack">
+              <label className="checkbox-row" htmlFor="isLowStock">
+                <input
+                  id="isLowStock"
+                  name="isLowStock"
+                  type="checkbox"
+                  value="true"
+                  defaultChecked={data.asset.isLowStock}
+                />
+                <span>{data.dictionary.common.lowStock}</span>
+              </label>
             </div>
 
             <div className="field-stack full-span">

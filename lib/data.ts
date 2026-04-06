@@ -459,6 +459,8 @@ export async function exportWorkspaceData(workspaceId?: string) {
       barcodeSource: asset.barcodeSource,
       quantity: asset.quantity,
       trackingMode: asset.trackingMode,
+      usageState: asset.usageState,
+      isLowStock: asset.isLowStock,
       sensitivityLevel: asset.sensitivityLevel,
       status: asset.status,
       currentLocationId: asset.currentLocationId,

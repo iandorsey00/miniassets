@@ -109,6 +109,8 @@ const createAssetSchema = z
     barcodeSource: z.string().trim().max(64).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
+    usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
+    isLowStock: z.coerce.boolean().optional(),
     sensitivityLevel: z.enum(["LOW", "MEDIUM"]),
     notes: z.string().trim().max(1000).optional(),
   })
@@ -137,6 +139,8 @@ const updateAssetSchema = z
     barcodeSource: z.string().trim().max(64).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
+    usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
+    isLowStock: z.coerce.boolean().optional(),
     sensitivityLevel: z.enum(["LOW", "MEDIUM"]),
     notes: z.string().trim().max(1000).optional(),
   })
@@ -681,6 +685,8 @@ export async function createAssetAction(formData: FormData) {
     barcodeSource: formData.get("barcodeSource") || undefined,
     quantity: formData.get("quantity"),
     trackingMode: formData.get("trackingMode"),
+    usageState: formData.get("usageState") || undefined,
+    isLowStock: formData.get("isLowStock") || undefined,
     sensitivityLevel: formData.get("sensitivityLevel"),
     notes: formData.get("notes") || undefined,
   });
@@ -721,6 +727,8 @@ export async function createAssetAction(formData: FormData) {
       barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual" : null),
       quantity: parsed.quantity,
       trackingMode: parsed.trackingMode,
+      usageState: parsed.usageState || null,
+      isLowStock: Boolean(parsed.isLowStock),
       sensitivityLevel: parsed.sensitivityLevel,
       notes: parsed.notes || null,
       lastVerifiedAt: parsed.currentLocationId ? new Date() : null,
@@ -761,6 +769,8 @@ export async function updateAssetAction(formData: FormData) {
     barcodeSource: formData.get("barcodeSource") || undefined,
     quantity: formData.get("quantity"),
     trackingMode: formData.get("trackingMode"),
+    usageState: formData.get("usageState") || undefined,
+    isLowStock: formData.get("isLowStock") || undefined,
     sensitivityLevel: formData.get("sensitivityLevel"),
     notes: formData.get("notes") || undefined,
   });
@@ -809,6 +819,8 @@ export async function updateAssetAction(formData: FormData) {
       barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual-or-scan" : null),
       quantity: parsed.quantity,
       trackingMode: parsed.trackingMode,
+      usageState: parsed.usageState || null,
+      isLowStock: Boolean(parsed.isLowStock),
       sensitivityLevel: parsed.sensitivityLevel,
       notes: parsed.notes || null,
     },

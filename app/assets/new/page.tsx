@@ -1,8 +1,9 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { AssetLocationField } from "@/components/asset-location-field";
 import { PageHeader, Panel } from "@/components/ui";
 import { createAssetAction } from "@/lib/actions";
-import { commonColorValues, locationKindLabels, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
-import { getLocationsData } from "@/lib/data";
+import { assetUsageStateLabels, commonColorValues, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
+import { buildLocationPath, getLocationsData } from "@/lib/data";
 
 export default async function NewAssetPage({
   searchParams,
@@ -11,6 +12,13 @@ export default async function NewAssetPage({
 }) {
   const params = await searchParams;
   const data = await getLocationsData(params.workspaceId);
+  const locationOptions = data.locations.map((location) => ({
+    id: location.id,
+    path: buildLocationPath(data.locations, location.id, data.locale) || location.code || location.id,
+    code: location.code,
+    nameEn: location.nameEn,
+    nameZh: location.nameZh,
+  }));
 
   return (
     <>
@@ -46,17 +54,22 @@ export default async function NewAssetPage({
               <input id="assetCode" name="assetCode" required placeholder="AST-0100" />
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="currentLocationId">{data.dictionary.common.location}</label>
-              <select id="currentLocationId" name="currentLocationId" defaultValue="">
-                <option value="">{data.dictionary.assets.currentLocationFallback}</option>
-                {data.locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {locationKindLabels[location.kind][data.locale === "ZH_CN" ? "zh" : "en"]} · {location.nameEn || location.nameZh || location.code || location.id}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AssetLocationField
+              inputId="currentLocationId"
+              inputName="currentLocationId"
+              label={data.dictionary.common.location}
+              emptyLabel={data.dictionary.assets.currentLocationFallback}
+              options={locationOptions}
+              storageKey={`miniassets:asset-create-location:${data.currentWorkspace?.id ?? "default"}`}
+              labels={{
+                placeholder: data.dictionary.assets.locationPickerPlaceholder,
+                help: data.dictionary.assets.locationPickerHelp,
+                matched: data.dictionary.assets.locationPickerMatched,
+                unresolved: data.dictionary.assets.locationPickerUnresolved,
+                advanced: data.dictionary.assets.locationPickerAdvanced,
+                locationId: data.dictionary.assets.locationPickerLocationId,
+              }}
+            />
 
             <div className="field-stack">
               <label htmlFor="nameEn">{data.dictionary.common.englishName}</label>
@@ -120,6 +133,18 @@ export default async function NewAssetPage({
             </div>
 
             <div className="field-stack">
+              <label htmlFor="usageState">{data.dictionary.common.usageState}</label>
+              <select id="usageState" name="usageState" defaultValue="">
+                <option value="">{data.dictionary.common.optional}</option>
+                {Object.entries(assetUsageStateLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
               <label htmlFor="quantity">{data.dictionary.common.quantity}</label>
               <input id="quantity" name="quantity" type="number" min="1" defaultValue="1" />
             </div>
@@ -133,6 +158,13 @@ export default async function NewAssetPage({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="field-stack">
+              <label className="checkbox-row" htmlFor="isLowStock">
+                <input id="isLowStock" name="isLowStock" type="checkbox" value="true" />
+                <span>{data.dictionary.common.lowStock}</span>
+              </label>
             </div>
 
             <div className="field-stack">

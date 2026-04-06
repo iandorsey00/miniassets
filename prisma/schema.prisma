@@ -76,6 +76,11 @@ enum TrackingMode {
   GROUP
 }
 
+enum AssetUsageState {
+  STORAGE
+  IN_USE
+}
+
 enum AssetStatus {
   ACTIVE
   MISSING
@@ -196,6 +201,8 @@ model Asset {
   barcodeSource     String?
   quantity          Int              @default(1)
   trackingMode      TrackingMode     @default(INDIVIDUAL)
+  usageState        AssetUsageState?
+  isLowStock        Boolean          @default(false)
   sensitivityLevel  SensitivityLevel @default(LOW)
   status            AssetStatus      @default(ACTIVE)
   lastVerifiedAt    DateTime?
