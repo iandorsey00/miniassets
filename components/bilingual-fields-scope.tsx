@@ -25,8 +25,8 @@ export function BilingualFieldsScope({
 
   return (
     <BilingualFieldsContext.Provider value={value}>
-      <div className="bilingual-scope">
-        <div className="bilingual-scope-header">
+      <div className="bilingual-scope full-span">
+        <div className="bilingual-scope-header full-span">
           <span className="muted bilingual-scope-label">{label}</span>
           <div className="bilingual-toggle" role="tablist" aria-label={label}>
             <button
@@ -45,7 +45,7 @@ export function BilingualFieldsScope({
             </button>
           </div>
         </div>
-        {children}
+        <div className="bilingual-scope-grid form-grid">{children}</div>
       </div>
     </BilingualFieldsContext.Provider>
   );

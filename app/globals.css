@@ -69,6 +69,11 @@
   gap: 0.8rem;
 }
 
+.bilingual-scope-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 .bilingual-scope-header {
   display: flex;
   justify-content: space-between;
