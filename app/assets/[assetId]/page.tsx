@@ -7,7 +7,11 @@ import { deleteAssetAction, moveAssetAction, updateAssetAction } from "@/lib/act
 import {
   assetStatusLabels,
   assetUsageStateLabels,
+  capacityUnitLabels,
+  capacityUnitValues,
   commonColorValues,
+  netWeightUnitLabels,
+  netWeightUnitValues,
   placementConfidenceLabels,
   sensitivityLabels,
   trackingModeLabels,
@@ -64,6 +68,8 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.barcode}: ${data.asset.barcodeValue || "-"}`,
     `${data.dictionary.common.barcodeFormat}: ${data.asset.barcodeFormat || "-"}`,
     `${data.dictionary.common.barcodeSource}: ${data.asset.barcodeSource || "-"}`,
+    `${data.dictionary.common.capacity}: ${data.asset.capacityValue && data.asset.capacityUnit ? `${data.asset.capacityValue} ${capacityUnitLabels[data.asset.capacityUnit as keyof typeof capacityUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}` : "-"}`,
+    `${data.dictionary.common.netWeight}: ${data.asset.netWeightValue && data.asset.netWeightUnit ? `${data.asset.netWeightValue} ${netWeightUnitLabels[data.asset.netWeightUnit as keyof typeof netWeightUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}` : "-"}`,
     `${data.dictionary.common.lastVerified}: ${formatDateTime(data.asset.lastVerifiedAt, data.localeCode)}`,
     `${data.dictionary.common.description}: ${data.asset.description || "-"}`,
     `${data.dictionary.common.notes}: ${data.asset.notes || "-"}`,
@@ -105,7 +111,7 @@ export default async function AssetDetailPage({
               <span>{data.dictionary.common.sensitivity}</span>
               <Badge
                 label={sensitivityLabels[data.asset.sensitivityLevel][data.locale === "ZH_CN" ? "zh" : "en"]}
-                tone="warning"
+                tone="neutral"
               />
             </div>
             <div className="split-line">
@@ -174,6 +180,22 @@ export default async function AssetDetailPage({
             <div className="split-line">
               <span>{data.dictionary.common.barcodeSource}</span>
               <span>{data.asset.barcodeSource || "-"}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.capacity}</span>
+              <span>
+                {data.asset.capacityValue && data.asset.capacityUnit
+                  ? `${data.asset.capacityValue} ${capacityUnitLabels[data.asset.capacityUnit as keyof typeof capacityUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}`
+                  : "-"}
+              </span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.netWeight}</span>
+              <span>
+                {data.asset.netWeightValue && data.asset.netWeightUnit
+                  ? `${data.asset.netWeightValue} ${netWeightUnitLabels[data.asset.netWeightUnit as keyof typeof netWeightUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}`
+                  : "-"}
+              </span>
             </div>
             <div className="stack">
               <strong>{data.dictionary.common.description}</strong>
@@ -361,6 +383,54 @@ export default async function AssetDetailPage({
             </div>
 
             <div className="field-stack">
+              <label htmlFor="capacityValue">{data.dictionary.common.capacity}</label>
+              <input
+                id="capacityValue"
+                name="capacityValue"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={data.asset.capacityValue ?? ""}
+              />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="capacityUnit">{data.dictionary.common.unit}</label>
+              <select id="capacityUnit" name="capacityUnit" defaultValue={data.asset.capacityUnit ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                {capacityUnitValues.map((value) => (
+                  <option key={value} value={value}>
+                    {capacityUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="netWeightValue">{data.dictionary.common.netWeight}</label>
+              <input
+                id="netWeightValue"
+                name="netWeightValue"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={data.asset.netWeightValue ?? ""}
+              />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="netWeightUnit">{data.dictionary.common.unit}</label>
+              <select id="netWeightUnit" name="netWeightUnit" defaultValue={data.asset.netWeightUnit ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                {netWeightUnitValues.map((value) => (
+                  <option key={value} value={value}>
+                    {netWeightUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
               <label htmlFor="trackingMode">{data.dictionary.common.trackingMode}</label>
               <select id="trackingMode" name="trackingMode" defaultValue={data.asset.trackingMode}>
                 {Object.entries(trackingModeLabels).map(([key, value]) => (
@@ -426,12 +496,15 @@ export default async function AssetDetailPage({
               <button type="submit">{data.dictionary.common.save}</button>
             </div>
           </form>
-          <form action={deleteAssetAction} className="asset-delete-form">
-            <input type="hidden" name="assetId" value={data.asset.id} />
-            <button type="submit" className="ghost-button descriptor-remove-button">
-              {data.dictionary.assets.deleteAsset}
-            </button>
-          </form>
+          <div className="asset-danger-zone">
+            <p className="muted">{data.dictionary.assets.deleteAssetHelp}</p>
+            <form action={deleteAssetAction} className="asset-delete-form">
+              <input type="hidden" name="assetId" value={data.asset.id} />
+              <button type="submit" className="ghost-button danger-button">
+                {data.dictionary.assets.deleteAsset}
+              </button>
+            </form>
+          </div>
         </div>
         <datalist id="primaryColorSuggestions">
           {Array.from(new Set([...commonColorValues, ...suggestions.primaryColors])).map((value) => (

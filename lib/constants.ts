@@ -181,6 +181,18 @@ export const assetUsageStateLabels = {
   IN_USE: { zh: "使用中", en: "In use" },
 } as const;
 
+export const capacityUnitValues = ["ML", "L"] as const;
+export const capacityUnitLabels = {
+  ML: { zh: "毫升", en: "mL" },
+  L: { zh: "升", en: "L" },
+} as const;
+
+export const netWeightUnitValues = ["G", "KG"] as const;
+export const netWeightUnitLabels = {
+  G: { zh: "克", en: "g" },
+  KG: { zh: "千克", en: "kg" },
+} as const;
+
 export const assetStatusLabels = {
   ACTIVE: { zh: "在管", en: "Active" },
   MISSING: { zh: "待寻找", en: "Missing" },

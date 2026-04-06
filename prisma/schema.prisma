@@ -199,6 +199,10 @@ model Asset {
   barcodeValue      String?
   barcodeFormat     String?
   barcodeSource     String?
+  capacityValue     Float?
+  capacityUnit      String?
+  netWeightValue    Float?
+  netWeightUnit     String?
   quantity          Int              @default(1)
   trackingMode      TrackingMode     @default(INDIVIDUAL)
   usageState        AssetUsageState?
