@@ -94,7 +94,6 @@ const createAssetSchema = z
   .object({
     workspaceId: z.string().min(1),
     currentLocationId: z.string().optional(),
-    assetCode: z.string().trim().min(2).max(32),
     nameEn: z.string().trim().max(120).optional(),
     nameZh: z.string().trim().max(120).optional(),
     primaryColor: z.string().trim().max(80).optional(),
@@ -124,7 +123,6 @@ const updateAssetSchema = z
     assetId: z.string().min(1),
     workspaceId: z.string().min(1),
     currentLocationId: z.string().optional(),
-    assetCode: z.string().trim().min(2).max(32),
     nameEn: z.string().trim().max(120).optional(),
     nameZh: z.string().trim().max(120).optional(),
     primaryColor: z.string().trim().max(80).optional(),
@@ -155,6 +153,10 @@ const moveAssetSchema = z.object({
   status: z.enum(["ACTIVE", "MISSING", "ARCHIVED"]),
   confidence: z.enum(["VERIFIED", "ASSUMED", "REPORTED"]),
   note: z.string().trim().max(500).optional(),
+});
+
+const deleteAssetSchema = z.object({
+  assetId: z.string().min(1),
 });
 
 function revalidateWorkspaceViews() {
@@ -209,6 +211,25 @@ function validateLocationKindAndCode(
 
 function collapseWhitespace(value: string | undefined) {
   return value?.replace(/\s+/g, " ").trim() || "";
+}
+
+async function generateNextAssetCode(workspaceId: string) {
+  const existingCodes = await prisma.asset.findMany({
+    where: { workspaceId },
+    select: { assetCode: true },
+  });
+
+  const highestNumber = existingCodes.reduce((highest, asset) => {
+    const match = asset.assetCode.match(/^AST-(\d+)$/i);
+    if (!match) {
+      return highest;
+    }
+
+    const parsed = Number.parseInt(match[1] ?? "", 10);
+    return Number.isFinite(parsed) ? Math.max(highest, parsed) : highest;
+  }, 0);
+
+  return `AST-${String(highestNumber + 1).padStart(5, "0")}`;
 }
 
 function toTitleCase(value: string) {
@@ -670,7 +691,6 @@ export async function createAssetAction(formData: FormData) {
   const parsed = createAssetSchema.parse({
     workspaceId: formData.get("workspaceId"),
     currentLocationId: formData.get("currentLocationId") || undefined,
-    assetCode: formData.get("assetCode"),
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
     primaryColor: formData.get("primaryColor") || undefined,
@@ -698,7 +718,8 @@ export async function createAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
-  const [brand, model, variant, subvariant, barcodeSource] = await Promise.all([
+  const [assetCode, brand, model, variant, subvariant, barcodeSource] = await Promise.all([
+    generateNextAssetCode(parsed.workspaceId),
     canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
     canonicalizeWorkspaceValue(parsed.workspaceId, "variant", parsed.variant),
@@ -711,7 +732,7 @@ export async function createAssetAction(formData: FormData) {
       workspaceId: parsed.workspaceId,
       createdByUserId: user.id,
       currentLocationId: parsed.currentLocationId || null,
-      assetCode: parsed.assetCode.toUpperCase(),
+      assetCode,
       nameEn: parsed.nameEn || null,
       nameZh: parsed.nameZh || null,
       color: primaryColor || null,
@@ -754,7 +775,6 @@ export async function updateAssetAction(formData: FormData) {
     assetId: formData.get("assetId"),
     workspaceId: formData.get("workspaceId"),
     currentLocationId: formData.get("currentLocationId") || undefined,
-    assetCode: formData.get("assetCode"),
     nameEn: formData.get("nameEn") || undefined,
     nameZh: formData.get("nameZh") || undefined,
     primaryColor: formData.get("primaryColor") || undefined,
@@ -803,7 +823,6 @@ export async function updateAssetAction(formData: FormData) {
     where: { id: parsed.assetId },
     data: {
       currentLocationId: parsed.currentLocationId || null,
-      assetCode: parsed.assetCode.toUpperCase(),
       nameEn: parsed.nameEn || null,
       nameZh: parsed.nameZh || null,
       color: primaryColor || null,
@@ -873,4 +892,31 @@ export async function moveAssetAction(formData: FormData) {
 
   revalidateWorkspaceViews();
   redirect(`/assets/${parsed.assetId}`);
+}
+
+export async function deleteAssetAction(formData: FormData) {
+  const parsed = deleteAssetSchema.parse({
+    assetId: formData.get("assetId"),
+  });
+
+  const asset = await prisma.asset.findUnique({
+    where: { id: parsed.assetId },
+    select: { id: true, workspaceId: true },
+  });
+
+  if (!asset) {
+    throw new Error("Asset not found.");
+  }
+
+  const context = await getViewerContext(asset.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(asset.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  await prisma.asset.delete({
+    where: { id: parsed.assetId },
+  });
+
+  revalidateWorkspaceViews();
+  redirect("/assets");
 }

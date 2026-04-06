@@ -1,5 +1,6 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { PageHeader, Panel } from "@/components/ui";
 import { createAssetAction } from "@/lib/actions";
 import { assetUsageStateLabels, commonColorValues, sensitivityLabels, trackingModeLabels } from "@/lib/constants";
@@ -49,11 +50,6 @@ export default async function NewAssetPage({
           <form action={createAssetAction} className="form-grid">
             <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
 
-            <div className="field-stack">
-              <label htmlFor="assetCode">{data.dictionary.common.itemCode}</label>
-              <input id="assetCode" name="assetCode" required placeholder="AST-0100" />
-            </div>
-
             <AssetLocationField
               inputId="currentLocationId"
               inputName="currentLocationId"
@@ -71,15 +67,11 @@ export default async function NewAssetPage({
               }}
             />
 
-            <div className="field-stack">
-              <label htmlFor="nameEn">{data.dictionary.common.englishName}</label>
-              <input id="nameEn" name="nameEn" />
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="nameZh">{data.dictionary.common.chineseName}</label>
-              <input id="nameZh" name="nameZh" />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.englishName}
+              chineseLabel={data.dictionary.common.chineseName}
+            />
 
             <div className="field-stack">
               <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>

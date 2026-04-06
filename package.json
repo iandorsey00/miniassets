@@ -1,6 +1,6 @@
 {
   "name": "miniassets",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "MiniAssets - bilingual household asset management with MiniAuth",
   "private": true,
   "type": "module",

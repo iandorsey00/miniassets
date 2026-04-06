@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { ACCENT_COOKIE, LOCALE_COOKIE, THEME_COOKIE, WORKSPACE_COOKIE } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
-import { pickLocalizedText } from "@/lib/present";
+import { formatAssetLabel, pickLocalizedText } from "@/lib/present";
 import { prisma } from "@/lib/prisma";
 
 export async function getPreferencesForLayout() {
@@ -152,6 +152,42 @@ async function getAssetFieldSuggestions(workspaceId: string) {
   };
 }
 
+function buildAssetSearchText(
+  asset: {
+    assetCode: string;
+    nameEn: string | null;
+    nameZh: string | null;
+    color: string | null;
+    primaryColor: string | null;
+    secondaryColor: string | null;
+    brand: string | null;
+    model: string | null;
+    variant: string | null;
+    subvariant: string | null;
+    barcodeValue: string | null;
+    description: string | null;
+    notes: string | null;
+    currentLocationId?: string | null;
+  },
+  locations: Array<{ id: string; parentId: string | null; nameEn: string | null; nameZh: string | null }>,
+) {
+  return [
+    asset.assetCode,
+    asset.nameEn,
+    asset.nameZh,
+    formatAssetLabel("EN", asset, { includeModel: true }),
+    formatAssetLabel("ZH_CN", asset, { includeModel: true }),
+    asset.barcodeValue,
+    asset.description,
+    asset.notes,
+    asset.currentLocationId ? buildLocationPath(locations, asset.currentLocationId, "EN") : "",
+    asset.currentLocationId ? buildLocationPath(locations, asset.currentLocationId, "ZH_CN") : "",
+  ]
+    .filter(Boolean)
+    .join(" | ")
+    .toLowerCase();
+}
+
 export async function getDashboardData(workspaceId?: string) {
   const context = await getViewerContext(workspaceId);
   if (!context.currentWorkspace) {
@@ -223,21 +259,6 @@ export async function getAssetsData(filters: {
   const where: Prisma.AssetWhereInput = {
     workspaceId: context.currentWorkspace.id,
     status: filters.status || undefined,
-    OR: filters.q
-      ? [
-          { assetCode: { contains: filters.q } },
-          { nameEn: { contains: filters.q } },
-          { nameZh: { contains: filters.q } },
-          { barcodeValue: { contains: filters.q } },
-          { color: { contains: filters.q } },
-          { primaryColor: { contains: filters.q } },
-          { secondaryColor: { contains: filters.q } },
-          { brand: { contains: filters.q } },
-          { model: { contains: filters.q } },
-          { variant: { contains: filters.q } },
-          { subvariant: { contains: filters.q } },
-        ]
-      : undefined,
   };
 
   const [assets, locations] = await Promise.all([
@@ -254,7 +275,12 @@ export async function getAssetsData(filters: {
     }),
   ]);
 
-  return { ...context, assets, locations };
+  const query = filters.q?.trim().toLowerCase();
+  const filteredAssets = query
+    ? assets.filter((asset) => buildAssetSearchText(asset, locations).includes(query))
+    : assets;
+
+  return { ...context, assets: filteredAssets, locations };
 }
 
 export async function getAssetDetail(assetId: string) {

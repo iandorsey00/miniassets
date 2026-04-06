@@ -26,11 +26,43 @@ export default async function AssetsPage({
       />
 
       <Panel>
-        <div className="split-line">
-          <div className="muted">{data.dictionary.assets.lookupHelp}</div>
-          <div className="button-content">
-            <Badge label={data.dictionary.common.optional} tone="accent" />
+        <div className="section-stack">
+          <div className="split-line">
+            <div className="muted">{data.dictionary.assets.lookupHelp}</div>
+            <div className="button-content">
+              <Badge label={data.dictionary.common.optional} tone="accent" />
+            </div>
           </div>
+
+          <form action="/assets" className="form-grid">
+            {data.currentWorkspace?.id ? <input type="hidden" name="workspaceId" value={data.currentWorkspace.id} /> : null}
+            <div className="field-stack full-span">
+              <label htmlFor="assetSearch">{data.dictionary.common.search}</label>
+              <input
+                id="assetSearch"
+                name="q"
+                defaultValue={params.q ?? ""}
+                placeholder={data.dictionary.assets.searchPlaceholder}
+              />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="statusFilter">{data.dictionary.common.status}</label>
+              <select id="statusFilter" name="status" defaultValue={params.status ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                {Object.entries(assetStatusLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field-stack search-actions">
+              <span className="sr-only">{data.dictionary.common.search}</span>
+              <button type="submit">{data.dictionary.common.search}</button>
+            </div>
+          </form>
         </div>
       </Panel>
 

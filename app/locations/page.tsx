@@ -18,6 +18,7 @@ import {
 import { buildLocationPath, getLocationsData } from "@/lib/data";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { pickLocalizedText } from "@/lib/present";
+import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { LocationCreateForm } from "@/components/location-create-form";
 import { PageHeader, Panel } from "@/components/ui";
 
@@ -151,15 +152,15 @@ function renderTree(
                     {numericCode ? <p className="muted">{data.dictionary.locations.numericCodeHint}</p> : null}
                   </div>
 
-                  <div className="field-stack">
-                    <label htmlFor={`nameEn-${location.id}`}>{data.dictionary.common.englishName}</label>
-                    <input id={`nameEn-${location.id}`} name="nameEn" defaultValue={location.nameEn ?? ""} />
-                  </div>
-
-                  <div className="field-stack">
-                    <label htmlFor={`nameZh-${location.id}`}>{data.dictionary.common.chineseName}</label>
-                    <input id={`nameZh-${location.id}`} name="nameZh" defaultValue={location.nameZh ?? ""} />
-                  </div>
+                  <BilingualNameFields
+                    locale={data.locale}
+                    englishLabel={data.dictionary.common.englishName}
+                    chineseLabel={data.dictionary.common.chineseName}
+                    defaultEnglishValue={location.nameEn ?? ""}
+                    defaultChineseValue={location.nameZh ?? ""}
+                    englishId={`nameEn-${location.id}`}
+                    chineseId={`nameZh-${location.id}`}
+                  />
 
                   <div className="field-stack full-span">
                     <label htmlFor={`notes-${location.id}`}>{data.dictionary.common.notes}</label>

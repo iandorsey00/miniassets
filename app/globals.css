@@ -30,11 +30,42 @@
   margin: 0;
 }
 
+.asset-delete-form {
+  margin-top: 0.9rem;
+}
+
 .icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
+}
+
+.bilingual-fields {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.bilingual-toggle {
+  display: inline-flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.bilingual-chip {
+  min-height: 2.2rem;
+  min-width: 2.2rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.bilingual-chip.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.is-hidden {
+  display: none;
 }
 
 .checkbox-row {
@@ -53,6 +84,10 @@
 
 .row-meta {
   text-align: right;
+}
+
+.search-actions {
+  align-self: end;
 }
 
 .section-stack {

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { createLocationAction } from "@/lib/actions";
 import {
   getAllowedLocationKinds,
@@ -129,15 +130,13 @@ export function LocationCreateForm({
         <p className="muted">{dictionary.locations.typeHelp}</p>
       </div>
 
-      <div className="field-stack">
-        <label htmlFor="nameEn">{dictionary.common.englishName}</label>
-        <input id="nameEn" name="nameEn" disabled={showPositionPreset && !requireCustomNames} />
-      </div>
-
-      <div className="field-stack">
-        <label htmlFor="nameZh">{dictionary.common.chineseName}</label>
-        <input id="nameZh" name="nameZh" disabled={showPositionPreset && !requireCustomNames} />
-      </div>
+      <BilingualNameFields
+        locale={locale}
+        englishLabel={dictionary.common.englishName}
+        chineseLabel={dictionary.common.chineseName}
+        englishDisabled={showPositionPreset && !requireCustomNames}
+        chineseDisabled={showPositionPreset && !requireCustomNames}
+      />
 
       {showPositionPreset ? (
         <div className="field-stack">

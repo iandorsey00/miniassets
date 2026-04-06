@@ -1,8 +1,9 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
 import { AssetShareActions } from "@/components/asset-share-actions";
+import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
-import { moveAssetAction, updateAssetAction } from "@/lib/actions";
+import { deleteAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
   assetStatusLabels,
   assetUsageStateLabels,
@@ -268,11 +269,6 @@ export default async function AssetDetailPage({
             <input type="hidden" name="assetId" value={data.asset.id} />
             <input type="hidden" name="workspaceId" value={data.asset.workspaceId} />
 
-            <div className="field-stack">
-              <label htmlFor="assetCode">{data.dictionary.common.itemCode}</label>
-              <input id="assetCode" name="assetCode" defaultValue={data.asset.assetCode} required />
-            </div>
-
             <AssetLocationField
               inputId="currentLocationId"
               inputName="currentLocationId"
@@ -291,15 +287,13 @@ export default async function AssetDetailPage({
               }}
             />
 
-            <div className="field-stack">
-              <label htmlFor="nameEn">{data.dictionary.common.englishName}</label>
-              <input id="nameEn" name="nameEn" defaultValue={data.asset.nameEn ?? ""} />
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="nameZh">{data.dictionary.common.chineseName}</label>
-              <input id="nameZh" name="nameZh" defaultValue={data.asset.nameZh ?? ""} />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.englishName}
+              chineseLabel={data.dictionary.common.chineseName}
+              defaultEnglishValue={data.asset.nameEn ?? ""}
+              defaultChineseValue={data.asset.nameZh ?? ""}
+            />
 
             <div className="field-stack">
               <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
@@ -431,6 +425,12 @@ export default async function AssetDetailPage({
             <div className="full-span">
               <button type="submit">{data.dictionary.common.save}</button>
             </div>
+          </form>
+          <form action={deleteAssetAction} className="asset-delete-form">
+            <input type="hidden" name="assetId" value={data.asset.id} />
+            <button type="submit" className="ghost-button descriptor-remove-button">
+              {data.dictionary.assets.deleteAsset}
+            </button>
           </form>
         </div>
         <datalist id="primaryColorSuggestions">
