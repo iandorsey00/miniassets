@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { ACCENT_COOKIE, LOCALE_COOKIE, THEME_COOKIE, WORKSPACE_COOKIE } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
-import { formatAssetLabel, pickLocalizedText } from "@/lib/present";
+import { formatAssetLabel, formatColorLabel, pickLocalizedText } from "@/lib/present";
 import { prisma } from "@/lib/prisma";
 
 export async function getPreferencesForLayout() {
@@ -179,6 +179,10 @@ function buildAssetSearchText(
     asset.assetCode,
     asset.nameEn,
     asset.nameZh,
+    formatColorLabel("EN", asset.primaryColor ?? asset.color),
+    formatColorLabel("ZH_CN", asset.primaryColor ?? asset.color),
+    formatColorLabel("EN", asset.secondaryColor),
+    formatColorLabel("ZH_CN", asset.secondaryColor),
     formatAssetLabel("EN", asset, { includeModel: true }),
     formatAssetLabel("ZH_CN", asset, { includeModel: true }),
     asset.variantZh,

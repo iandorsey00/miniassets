@@ -1,5 +1,6 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { PageHeader, Panel } from "@/components/ui";
 import { createAssetAction } from "@/lib/actions";
@@ -8,6 +9,7 @@ import {
   capacityUnitLabels,
   capacityUnitValues,
   commonColorValues,
+  commonColorLabels,
   netWeightUnitLabels,
   netWeightUnitValues,
   sensitivityLabels,
@@ -76,51 +78,67 @@ export default async function NewAssetPage({
               }}
             />
 
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.englishName}
-              chineseLabel={data.dictionary.common.chineseName}
-            />
+            <BilingualFieldsScope locale={data.locale} label={data.dictionary.common.language}>
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.englishName}
+                chineseLabel={data.dictionary.common.chineseName}
+              />
 
-            <div className="field-stack">
-              <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
-              <input id="primaryColor" name="primaryColor" list="primaryColorSuggestions" />
-            </div>
+              <div className="field-stack">
+                <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
+                <select id="primaryColor" name="primaryColor" defaultValue="">
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {commonColorValues.map((value) => (
+                    <option key={`primary-${value}`} value={value}>
+                      {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="field-stack">
-              <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
-              <input id="secondaryColor" name="secondaryColor" list="secondaryColorSuggestions" />
-            </div>
+              <div className="field-stack">
+                <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
+                <select id="secondaryColor" name="secondaryColor" defaultValue="">
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {commonColorValues.map((value) => (
+                    <option key={`secondary-${value}`} value={value}>
+                      {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="field-stack">
-              <label htmlFor="brand">{data.dictionary.common.brand}</label>
-              <input id="brand" name="brand" list="brandSuggestions" />
-            </div>
+              <div className="field-stack">
+                <label htmlFor="brand">{data.dictionary.common.brand}</label>
+                <input id="brand" name="brand" list="brandSuggestions" />
+              </div>
 
-            <div className="field-stack">
-              <label htmlFor="model">{data.dictionary.common.model}</label>
-              <input id="model" name="model" list="modelSuggestions" />
-            </div>
+              <div className="field-stack">
+                <label htmlFor="model">{data.dictionary.common.model}</label>
+                <input id="model" name="model" list="modelSuggestions" />
+              </div>
 
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.variant}
-              chineseLabel={data.dictionary.common.variant}
-              englishId="variant"
-              chineseId="variantZh"
-              englishName="variant"
-              chineseName="variantZh"
-            />
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.variant}
+                chineseLabel={data.dictionary.common.variant}
+                englishId="variant"
+                chineseId="variantZh"
+                englishName="variant"
+                chineseName="variantZh"
+              />
 
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.subvariant}
-              chineseLabel={data.dictionary.common.subvariant}
-              englishId="subvariant"
-              chineseId="subvariantZh"
-              englishName="subvariant"
-              chineseName="subvariantZh"
-            />
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.subvariant}
+                chineseLabel={data.dictionary.common.subvariant}
+                englishId="subvariant"
+                chineseId="subvariantZh"
+                englishName="subvariant"
+                chineseName="subvariantZh"
+              />
+            </BilingualFieldsScope>
 
             <div className="field-stack">
               <label htmlFor="barcodeValue">{data.dictionary.common.barcode}</label>
@@ -232,16 +250,6 @@ export default async function NewAssetPage({
             </div>
           </form>
 
-          <datalist id="primaryColorSuggestions">
-            {Array.from(new Set([...commonColorValues, ...data.assetFieldSuggestions.primaryColors])).map((value) => (
-              <option key={`primary-${value}`} value={value} />
-            ))}
-          </datalist>
-          <datalist id="secondaryColorSuggestions">
-            {Array.from(new Set([...commonColorValues, ...data.assetFieldSuggestions.secondaryColors])).map((value) => (
-              <option key={`secondary-${value}`} value={value} />
-            ))}
-          </datalist>
           <datalist id="brandSuggestions">
             {data.assetFieldSuggestions.brands.map((value) => (
               <option key={`brand-${value}`} value={value} />

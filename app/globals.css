@@ -30,6 +30,10 @@
   margin: 0;
 }
 
+.save-confirmation {
+  margin: 0;
+}
+
 .asset-delete-form {
   margin-top: 0.9rem;
 }
@@ -58,6 +62,23 @@
 .bilingual-fields {
   display: grid;
   gap: 0.8rem;
+}
+
+.bilingual-scope {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.bilingual-scope-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bilingual-scope-label {
+  margin: 0;
 }
 
 .bilingual-toggle {

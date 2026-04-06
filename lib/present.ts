@@ -1,4 +1,4 @@
-import { capacityUnitLabels, netWeightUnitLabels } from "@/lib/constants";
+import { capacityUnitLabels, commonColorLabels, netWeightUnitLabels } from "@/lib/constants";
 import type { AppLocale } from "@/lib/i18n";
 
 export function pickLocalizedText(
@@ -43,6 +43,16 @@ function formatMeasurement(
   return `${value} ${labels[unit][locale === "ZH_CN" ? "zh" : "en"]}`;
 }
 
+export function formatColorLabel(locale: AppLocale, value: string | null | undefined) {
+  const normalized = value?.trim() || "";
+  if (!normalized) {
+    return "";
+  }
+
+  const localized = commonColorLabels[normalized as keyof typeof commonColorLabels];
+  return localized ? localized[locale === "ZH_CN" ? "zh" : "en"] : normalized;
+}
+
 export function formatAssetLabel(
   locale: AppLocale,
   values: {
@@ -65,7 +75,8 @@ export function formatAssetLabel(
   },
   options?: { includeModel?: boolean },
 ) {
-  const primaryColor = values.primaryColor?.trim() || values.color?.trim() || "";
+  const primaryColor = formatColorLabel(locale, values.primaryColor?.trim() || values.color?.trim() || "");
+  const secondaryColor = formatColorLabel(locale, values.secondaryColor?.trim() || "");
   const variant = locale === "ZH_CN" ? values.variantZh?.trim() || values.variant?.trim() || "" : values.variant?.trim() || values.variantZh?.trim() || "";
   const subvariant =
     locale === "ZH_CN"
@@ -76,7 +87,7 @@ export function formatAssetLabel(
   const segments = [
     pickLocalizedText(locale, values),
     primaryColor,
-    values.secondaryColor?.trim() || "",
+    secondaryColor,
     values.brand?.trim() || "",
     variant,
     subvariant,

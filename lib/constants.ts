@@ -221,3 +221,20 @@ export const commonColorValues = [
   "White",
   "Yellow",
 ] as const;
+
+export const commonColorLabels: Record<(typeof commonColorValues)[number], { zh: string; en: string }> = {
+  Black: { zh: "黑色", en: "Black" },
+  Blue: { zh: "蓝色", en: "Blue" },
+  Brown: { zh: "棕色", en: "Brown" },
+  Clear: { zh: "透明", en: "Clear" },
+  Gold: { zh: "金色", en: "Gold" },
+  Gray: { zh: "灰色", en: "Gray" },
+  Green: { zh: "绿色", en: "Green" },
+  Orange: { zh: "橙色", en: "Orange" },
+  Pink: { zh: "粉色", en: "Pink" },
+  Purple: { zh: "紫色", en: "Purple" },
+  Red: { zh: "红色", en: "Red" },
+  Silver: { zh: "银色", en: "Silver" },
+  White: { zh: "白色", en: "White" },
+  Yellow: { zh: "黄色", en: "Yellow" },
+};

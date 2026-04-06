@@ -1,6 +1,7 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
 import { AssetShareActions } from "@/components/asset-share-actions";
+import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
 import { deleteAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
@@ -10,6 +11,7 @@ import {
   capacityUnitLabels,
   capacityUnitValues,
   commonColorValues,
+  commonColorLabels,
   netWeightUnitLabels,
   netWeightUnitValues,
   placementConfidenceLabels,
@@ -17,14 +19,17 @@ import {
   trackingModeLabels,
 } from "@/lib/constants";
 import { buildLocationPath, getAssetDetail, movementTone } from "@/lib/data";
-import { formatAssetLabel, formatDateTime } from "@/lib/present";
+import { formatAssetLabel, formatColorLabel, formatDateTime } from "@/lib/present";
 
 export default async function AssetDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ assetId: string }>;
+  searchParams: Promise<{ saved?: string }>;
 }) {
   const { assetId } = await params;
+  const pageParams = await searchParams;
   const data = await getAssetDetail(assetId);
 
   if (!data.asset) {
@@ -32,8 +37,6 @@ export default async function AssetDetailPage({
   }
 
   const suggestions = data.assetFieldSuggestions ?? {
-    primaryColors: [],
-    secondaryColors: [],
     brands: [],
     models: [],
     variants: [],
@@ -59,8 +62,8 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.quantity}: ${data.asset.quantity}`,
     `${data.dictionary.common.sensitivity}: ${sensitivityLabels[data.asset.sensitivityLevel][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.status}: ${assetStatusLabels[data.asset.status][data.locale === "ZH_CN" ? "zh" : "en"]}`,
-    `${data.dictionary.common.primaryColor}: ${data.asset.primaryColor || data.asset.color || "-"}`,
-    `${data.dictionary.common.secondaryColor}: ${data.asset.secondaryColor || "-"}`,
+    `${data.dictionary.common.primaryColor}: ${formatColorLabel(data.locale, data.asset.primaryColor || data.asset.color) || "-"}`,
+    `${data.dictionary.common.secondaryColor}: ${formatColorLabel(data.locale, data.asset.secondaryColor) || "-"}`,
     `${data.dictionary.common.brand}: ${data.asset.brand || "-"}`,
     `${data.dictionary.common.model}: ${data.asset.model || "-"}`,
     `${data.dictionary.common.variant}: ${data.locale === "ZH_CN" ? data.asset.variantZh || data.asset.variant || "-" : data.asset.variant || data.asset.variantZh || "-"}`,
@@ -147,11 +150,11 @@ export default async function AssetDetailPage({
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.primaryColor}</span>
-              <span>{data.asset.primaryColor || data.asset.color || "-"}</span>
+              <span>{formatColorLabel(data.locale, data.asset.primaryColor || data.asset.color) || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.secondaryColor}</span>
-              <span>{data.asset.secondaryColor || "-"}</span>
+              <span>{formatColorLabel(data.locale, data.asset.secondaryColor) || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.brand}</span>
@@ -270,6 +273,7 @@ export default async function AssetDetailPage({
       <Panel title={data.dictionary.assets.editTitle}>
         <div className="grid-2">
           <div className="stack">
+            {pageParams.saved === "1" ? <p className="muted save-confirmation">{data.dictionary.common.savedMessage}</p> : null}
             <p className="muted">{data.dictionary.assets.scannerHelp}</p>
             <BarcodeScanner
               targetInputId="barcodeValue"
@@ -309,67 +313,91 @@ export default async function AssetDetailPage({
               }}
             />
 
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.englishName}
-              chineseLabel={data.dictionary.common.chineseName}
-              defaultEnglishValue={data.asset.nameEn ?? ""}
-              defaultChineseValue={data.asset.nameZh ?? ""}
-            />
-
-            <div className="field-stack">
-              <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
-              <input
-                id="primaryColor"
-                name="primaryColor"
-                list="primaryColorSuggestions"
-                defaultValue={data.asset.primaryColor ?? data.asset.color ?? ""}
+            <BilingualFieldsScope locale={data.locale} label={data.dictionary.common.language}>
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.englishName}
+                chineseLabel={data.dictionary.common.chineseName}
+                defaultEnglishValue={data.asset.nameEn ?? ""}
+                defaultChineseValue={data.asset.nameZh ?? ""}
               />
-            </div>
 
-            <div className="field-stack">
-              <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
-              <input
-                id="secondaryColor"
-                name="secondaryColor"
-                list="secondaryColorSuggestions"
-                defaultValue={data.asset.secondaryColor ?? ""}
+              <div className="field-stack">
+                <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
+                <select
+                  id="primaryColor"
+                  name="primaryColor"
+                  defaultValue={data.asset.primaryColor ?? data.asset.color ?? ""}
+                >
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {!commonColorValues.includes((data.asset.primaryColor ?? data.asset.color ?? "") as (typeof commonColorValues)[number]) &&
+                  (data.asset.primaryColor ?? data.asset.color) ? (
+                    <option value={data.asset.primaryColor ?? data.asset.color ?? ""}>
+                      {data.asset.primaryColor ?? data.asset.color}
+                    </option>
+                  ) : null}
+                  {commonColorValues.map((value) => (
+                    <option key={`primary-${value}`} value={value}>
+                      {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field-stack">
+                <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
+                <select
+                  id="secondaryColor"
+                  name="secondaryColor"
+                  defaultValue={data.asset.secondaryColor ?? ""}
+                >
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {!commonColorValues.includes((data.asset.secondaryColor ?? "") as (typeof commonColorValues)[number]) &&
+                  data.asset.secondaryColor ? (
+                    <option value={data.asset.secondaryColor}>{data.asset.secondaryColor}</option>
+                  ) : null}
+                  {commonColorValues.map((value) => (
+                    <option key={`secondary-${value}`} value={value}>
+                      {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field-stack">
+                <label htmlFor="brand">{data.dictionary.common.brand}</label>
+                <input id="brand" name="brand" list="brandSuggestions" defaultValue={data.asset.brand ?? ""} />
+              </div>
+
+              <div className="field-stack">
+                <label htmlFor="model">{data.dictionary.common.model}</label>
+                <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
+              </div>
+
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.variant}
+                chineseLabel={data.dictionary.common.variant}
+                englishId="variant"
+                chineseId="variantZh"
+                englishName="variant"
+                chineseName="variantZh"
+                defaultEnglishValue={data.asset.variant ?? ""}
+                defaultChineseValue={data.asset.variantZh ?? ""}
               />
-            </div>
 
-            <div className="field-stack">
-              <label htmlFor="brand">{data.dictionary.common.brand}</label>
-              <input id="brand" name="brand" list="brandSuggestions" defaultValue={data.asset.brand ?? ""} />
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="model">{data.dictionary.common.model}</label>
-              <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
-            </div>
-
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.variant}
-              chineseLabel={data.dictionary.common.variant}
-              englishId="variant"
-              chineseId="variantZh"
-              englishName="variant"
-              chineseName="variantZh"
-              defaultEnglishValue={data.asset.variant ?? ""}
-              defaultChineseValue={data.asset.variantZh ?? ""}
-            />
-
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.subvariant}
-              chineseLabel={data.dictionary.common.subvariant}
-              englishId="subvariant"
-              chineseId="subvariantZh"
-              englishName="subvariant"
-              chineseName="subvariantZh"
-              defaultEnglishValue={data.asset.subvariant ?? ""}
-              defaultChineseValue={data.asset.subvariantZh ?? ""}
-            />
+              <BilingualNameFields
+                locale={data.locale}
+                englishLabel={data.dictionary.common.subvariant}
+                chineseLabel={data.dictionary.common.subvariant}
+                englishId="subvariant"
+                chineseId="subvariantZh"
+                englishName="subvariant"
+                chineseName="subvariantZh"
+                defaultEnglishValue={data.asset.subvariant ?? ""}
+                defaultChineseValue={data.asset.subvariantZh ?? ""}
+              />
+            </BilingualFieldsScope>
 
             <div className="field-stack">
               <label htmlFor="barcodeValue">{data.dictionary.common.barcode}</label>
@@ -515,16 +543,6 @@ export default async function AssetDetailPage({
             </form>
           </div>
         </div>
-        <datalist id="primaryColorSuggestions">
-          {Array.from(new Set([...commonColorValues, ...suggestions.primaryColors])).map((value) => (
-            <option key={`primary-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="secondaryColorSuggestions">
-          {Array.from(new Set([...commonColorValues, ...suggestions.secondaryColors])).map((value) => (
-            <option key={`secondary-${value}`} value={value} />
-          ))}
-        </datalist>
         <datalist id="brandSuggestions">
           {suggestions.brands.map((value) => (
             <option key={`brand-${value}`} value={value} />

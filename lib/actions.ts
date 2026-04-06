@@ -20,6 +20,18 @@ import {
 import { getViewerContext } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
+function optionalPositiveNumber(max: number) {
+  return z.preprocess(
+    (value) => {
+      if (value === "" || value === null || typeof value === "undefined") {
+        return undefined;
+      }
+      return value;
+    },
+    z.coerce.number().positive().max(max).optional(),
+  );
+}
+
 const createLocationSchema = z.object({
   workspaceId: z.string().min(1),
   parentId: z.string().optional(),
@@ -108,9 +120,9 @@ const createAssetSchema = z
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
     barcodeSource: z.string().trim().max(64).optional(),
-    capacityValue: z.coerce.number().positive().max(100000).optional(),
+    capacityValue: optionalPositiveNumber(100000),
     capacityUnit: z.enum(["ML", "L"]).optional(),
-    netWeightValue: z.coerce.number().positive().max(100000).optional(),
+    netWeightValue: optionalPositiveNumber(100000),
     netWeightUnit: z.enum(["G", "KG"]).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
@@ -143,9 +155,9 @@ const updateAssetSchema = z
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
     barcodeSource: z.string().trim().max(64).optional(),
-    capacityValue: z.coerce.number().positive().max(100000).optional(),
+    capacityValue: optionalPositiveNumber(100000),
     capacityUnit: z.enum(["ML", "L"]).optional(),
-    netWeightValue: z.coerce.number().positive().max(100000).optional(),
+    netWeightValue: optionalPositiveNumber(100000),
     netWeightUnit: z.enum(["G", "KG"]).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
@@ -883,7 +895,7 @@ export async function updateAssetAction(formData: FormData) {
 
   revalidateWorkspaceViews();
   revalidatePath(`/assets/${parsed.assetId}`);
-  redirect(`/assets/${parsed.assetId}`);
+  redirect(`/assets/${parsed.assetId}?saved=1`);
 }
 
 export async function moveAssetAction(formData: FormData) {

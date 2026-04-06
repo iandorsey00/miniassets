@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useBilingualFieldsScope } from "@/components/bilingual-fields-scope";
 
 type BilingualNameFieldsProps = {
   locale: "ZH_CN" | "EN";
@@ -29,26 +30,32 @@ export function BilingualNameFields({
   englishDisabled = false,
   chineseDisabled = false,
 }: BilingualNameFieldsProps) {
-  const [visibleLocale, setVisibleLocale] = useState<"ZH_CN" | "EN">(locale);
+  const sharedScope = useBilingualFieldsScope();
+  const [localVisibleLocale, setLocalVisibleLocale] = useState<"ZH_CN" | "EN">(locale);
+  const visibleLocale = sharedScope?.visibleLocale ?? localVisibleLocale;
+  const setVisibleLocale = sharedScope?.setVisibleLocale ?? setLocalVisibleLocale;
+  const showLocalToggle = !sharedScope;
 
   return (
     <div className="bilingual-fields full-span">
-      <div className="bilingual-toggle" role="tablist" aria-label={`${englishLabel} / ${chineseLabel}`}>
-        <button
-          type="button"
-          className={`ghost-button bilingual-chip ${visibleLocale === "ZH_CN" ? "is-active" : ""}`}
-          onClick={() => setVisibleLocale("ZH_CN")}
-        >
-          中
-        </button>
-        <button
-          type="button"
-          className={`ghost-button bilingual-chip ${visibleLocale === "EN" ? "is-active" : ""}`}
-          onClick={() => setVisibleLocale("EN")}
-        >
-          En
-        </button>
-      </div>
+      {showLocalToggle ? (
+        <div className="bilingual-toggle" role="tablist" aria-label={`${englishLabel} / ${chineseLabel}`}>
+          <button
+            type="button"
+            className={`ghost-button bilingual-chip ${visibleLocale === "ZH_CN" ? "is-active" : ""}`}
+            onClick={() => setVisibleLocale("ZH_CN")}
+          >
+            中
+          </button>
+          <button
+            type="button"
+            className={`ghost-button bilingual-chip ${visibleLocale === "EN" ? "is-active" : ""}`}
+            onClick={() => setVisibleLocale("EN")}
+          >
+            En
+          </button>
+        </div>
+      ) : null}
 
       <div className={`field-stack ${visibleLocale === "EN" ? "" : "is-hidden"}`}>
         <label htmlFor={englishId}>{englishLabel}</label>
