@@ -102,15 +102,25 @@ export default async function NewAssetPage({
               <input id="model" name="model" list="modelSuggestions" />
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="variant">{data.dictionary.common.variant}</label>
-              <input id="variant" name="variant" list="variantSuggestions" />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.variant}
+              chineseLabel={data.dictionary.common.variant}
+              englishId="variant"
+              chineseId="variantZh"
+              englishName="variant"
+              chineseName="variantZh"
+            />
 
-            <div className="field-stack">
-              <label htmlFor="subvariant">{data.dictionary.common.subvariant}</label>
-              <input id="subvariant" name="subvariant" list="subvariantSuggestions" />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.subvariant}
+              chineseLabel={data.dictionary.common.subvariant}
+              englishId="subvariant"
+              chineseId="subvariantZh"
+              englishName="subvariant"
+              chineseName="subvariantZh"
+            />
 
             <div className="field-stack">
               <label htmlFor="barcodeValue">{data.dictionary.common.barcode}</label>

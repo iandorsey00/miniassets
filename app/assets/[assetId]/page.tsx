@@ -63,8 +63,8 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.secondaryColor}: ${data.asset.secondaryColor || "-"}`,
     `${data.dictionary.common.brand}: ${data.asset.brand || "-"}`,
     `${data.dictionary.common.model}: ${data.asset.model || "-"}`,
-    `${data.dictionary.common.variant}: ${data.asset.variant || "-"}`,
-    `${data.dictionary.common.subvariant}: ${data.asset.subvariant || "-"}`,
+    `${data.dictionary.common.variant}: ${data.locale === "ZH_CN" ? data.asset.variantZh || data.asset.variant || "-" : data.asset.variant || data.asset.variantZh || "-"}`,
+    `${data.dictionary.common.subvariant}: ${data.locale === "ZH_CN" ? data.asset.subvariantZh || data.asset.subvariant || "-" : data.asset.subvariant || data.asset.subvariantZh || "-"}`,
     `${data.dictionary.common.barcode}: ${data.asset.barcodeValue || "-"}`,
     `${data.dictionary.common.barcodeFormat}: ${data.asset.barcodeFormat || "-"}`,
     `${data.dictionary.common.barcodeSource}: ${data.asset.barcodeSource || "-"}`,
@@ -163,11 +163,11 @@ export default async function AssetDetailPage({
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.variant}</span>
-              <span>{data.asset.variant || "-"}</span>
+              <span>{data.locale === "ZH_CN" ? data.asset.variantZh || data.asset.variant || "-" : data.asset.variant || data.asset.variantZh || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.subvariant}</span>
-              <span>{data.asset.subvariant || "-"}</span>
+              <span>{data.locale === "ZH_CN" ? data.asset.subvariantZh || data.asset.subvariant || "-" : data.asset.subvariant || data.asset.subvariantZh || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.barcode}</span>
@@ -347,20 +347,29 @@ export default async function AssetDetailPage({
               <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="variant">{data.dictionary.common.variant}</label>
-              <input id="variant" name="variant" list="variantSuggestions" defaultValue={data.asset.variant ?? ""} />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.variant}
+              chineseLabel={data.dictionary.common.variant}
+              englishId="variant"
+              chineseId="variantZh"
+              englishName="variant"
+              chineseName="variantZh"
+              defaultEnglishValue={data.asset.variant ?? ""}
+              defaultChineseValue={data.asset.variantZh ?? ""}
+            />
 
-            <div className="field-stack">
-              <label htmlFor="subvariant">{data.dictionary.common.subvariant}</label>
-              <input
-                id="subvariant"
-                name="subvariant"
-                list="subvariantSuggestions"
-                defaultValue={data.asset.subvariant ?? ""}
-              />
-            </div>
+            <BilingualNameFields
+              locale={data.locale}
+              englishLabel={data.dictionary.common.subvariant}
+              chineseLabel={data.dictionary.common.subvariant}
+              englishId="subvariant"
+              chineseId="subvariantZh"
+              englishName="subvariant"
+              chineseName="subvariantZh"
+              defaultEnglishValue={data.asset.subvariant ?? ""}
+              defaultChineseValue={data.asset.subvariantZh ?? ""}
+            />
 
             <div className="field-stack">
               <label htmlFor="barcodeValue">{data.dictionary.common.barcode}</label>

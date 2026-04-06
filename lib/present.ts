@@ -40,19 +40,26 @@ export function formatAssetLabel(
     brand?: string | null;
     model?: string | null;
     variant?: string | null;
+    variantZh?: string | null;
     subvariant?: string | null;
+    subvariantZh?: string | null;
     assetCode?: string | null;
   },
   options?: { includeModel?: boolean },
 ) {
   const primaryColor = values.primaryColor?.trim() || values.color?.trim() || "";
+  const variant = locale === "ZH_CN" ? values.variantZh?.trim() || values.variant?.trim() || "" : values.variant?.trim() || values.variantZh?.trim() || "";
+  const subvariant =
+    locale === "ZH_CN"
+      ? values.subvariantZh?.trim() || values.subvariant?.trim() || ""
+      : values.subvariant?.trim() || values.subvariantZh?.trim() || "";
   const segments = [
     pickLocalizedText(locale, values),
     primaryColor,
     values.secondaryColor?.trim() || "",
     values.brand?.trim() || "",
-    values.variant?.trim() || "",
-    values.subvariant?.trim() || "",
+    variant,
+    subvariant,
     options?.includeModel ? values.model?.trim() || "" : "",
   ].filter(Boolean);
 

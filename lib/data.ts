@@ -136,7 +136,9 @@ async function getAssetFieldSuggestions(workspaceId: string) {
       brand: true,
       model: true,
       variant: true,
+      variantZh: true,
       subvariant: true,
+      subvariantZh: true,
       barcodeSource: true,
     },
   });
@@ -163,7 +165,9 @@ function buildAssetSearchText(
     brand: string | null;
     model: string | null;
     variant: string | null;
+    variantZh: string | null;
     subvariant: string | null;
+    subvariantZh: string | null;
     barcodeValue: string | null;
     description: string | null;
     notes: string | null;
@@ -177,6 +181,8 @@ function buildAssetSearchText(
     asset.nameZh,
     formatAssetLabel("EN", asset, { includeModel: true }),
     formatAssetLabel("ZH_CN", asset, { includeModel: true }),
+    asset.variantZh,
+    asset.subvariantZh,
     asset.barcodeValue,
     asset.description,
     asset.notes,
@@ -478,7 +484,9 @@ export async function exportWorkspaceData(workspaceId?: string) {
       brand: asset.brand,
       model: asset.model,
       variant: asset.variant,
+      variantZh: asset.variantZh,
       subvariant: asset.subvariant,
+      subvariantZh: asset.subvariantZh,
       description: asset.description,
       barcodeValue: asset.barcodeValue,
       barcodeFormat: asset.barcodeFormat,

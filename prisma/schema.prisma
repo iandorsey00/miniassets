@@ -194,7 +194,9 @@ model Asset {
   brand             String?
   model             String?
   variant           String?
+  variantZh         String?
   subvariant        String?
+  subvariantZh      String?
   description       String?
   barcodeValue      String?
   barcodeFormat     String?
