@@ -48,22 +48,25 @@ export function BilingualNameFields({
   const setVisibleLocale = sharedScope?.setVisibleLocale ?? setLocalVisibleLocale;
   const showLocalToggle = !sharedScope;
 
-  function routeValue(origin: "EN" | "ZH_CN", nextValue: string) {
-    const detectedLocale = detectInputLocale(nextValue);
-
-    if (origin === "EN") {
-      setEnglishValue(nextValue);
-
-      if (detectedLocale === "ZH_CN" && !chineseDisabled && !chineseValue.trim()) {
-        setChineseValue(nextValue);
-      }
+  function maybeRehomeValue(origin: "EN" | "ZH_CN", nextValue: string) {
+    const trimmed = nextValue.trim();
+    if (!trimmed) {
       return;
     }
 
-    setChineseValue(nextValue);
+    const detectedLocale = detectInputLocale(trimmed);
 
-    if (detectedLocale === "EN" && !englishDisabled && !englishValue.trim()) {
+    if (origin === "EN" && detectedLocale === "ZH_CN" && !chineseDisabled && !chineseValue.trim()) {
+      setEnglishValue("");
+      setChineseValue(nextValue);
+      setVisibleLocale("ZH_CN");
+      return;
+    }
+
+    if (origin === "ZH_CN" && detectedLocale === "EN" && !englishDisabled && !englishValue.trim()) {
+      setChineseValue("");
       setEnglishValue(nextValue);
+      setVisibleLocale("EN");
     }
   }
 
@@ -94,7 +97,8 @@ export function BilingualNameFields({
           id={englishId}
           name={englishName}
           value={englishValue}
-          onChange={(event) => routeValue("EN", event.target.value)}
+          onChange={(event) => setEnglishValue(event.target.value)}
+          onBlur={(event) => maybeRehomeValue("EN", event.target.value)}
           disabled={englishDisabled}
         />
       </div>
@@ -105,7 +109,8 @@ export function BilingualNameFields({
           id={chineseId}
           name={chineseName}
           value={chineseValue}
-          onChange={(event) => routeValue("ZH_CN", event.target.value)}
+          onChange={(event) => setChineseValue(event.target.value)}
+          onBlur={(event) => maybeRehomeValue("ZH_CN", event.target.value)}
           disabled={chineseDisabled}
         />
       </div>
