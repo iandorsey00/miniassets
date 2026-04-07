@@ -32,6 +32,18 @@ function normalizeLookupValue(value: string) {
   return value.trim().toLowerCase();
 }
 
+function matchesOption(option: AssetLocationOption, normalizedQuery: string) {
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  const haystacks = [option.path, option.code, option.nameEn, option.nameZh]
+    .filter(Boolean)
+    .map((value) => normalizeLookupValue(String(value)));
+
+  return haystacks.some((value) => value.includes(normalizedQuery));
+}
+
 export function AssetLocationField({
   inputId,
   inputName,
@@ -80,6 +92,7 @@ export function AssetLocationField({
   const [locationId, setLocationId] = useState(defaultLocationId ?? "");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [advancedId, setAdvancedId] = useState(defaultLocationId ?? "");
+  const [recentLocationIds, setRecentLocationIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!storageKey || typeof window === "undefined") {
@@ -90,6 +103,7 @@ export function AssetLocationField({
     const savedLocationId = window.localStorage.getItem(`${storageKey}:locationId`);
     const savedAdvancedId = window.localStorage.getItem(`${storageKey}:advancedId`);
     const savedAdvancedOpen = window.localStorage.getItem(`${storageKey}:advancedOpen`);
+    const savedRecentIds = window.localStorage.getItem(`${storageKey}:recentLocationIds`);
 
     const restoreTimer = window.setTimeout(() => {
       if (typeof savedAdvancedOpen === "string") {
@@ -107,6 +121,15 @@ export function AssetLocationField({
       if (savedAdvancedId !== null) {
         setAdvancedId(savedAdvancedId);
       }
+
+      if (savedRecentIds) {
+        try {
+          const parsed = JSON.parse(savedRecentIds);
+          if (Array.isArray(parsed)) {
+            setRecentLocationIds(parsed.filter((value): value is string => typeof value === "string"));
+          }
+        } catch {}
+      }
     }, 0);
 
     return () => window.clearTimeout(restoreTimer);
@@ -121,7 +144,8 @@ export function AssetLocationField({
     window.localStorage.setItem(`${storageKey}:locationId`, locationId);
     window.localStorage.setItem(`${storageKey}:advancedId`, advancedId);
     window.localStorage.setItem(`${storageKey}:advancedOpen`, advancedOpen ? "1" : "0");
-  }, [advancedId, advancedOpen, locationId, query, storageKey]);
+    window.localStorage.setItem(`${storageKey}:recentLocationIds`, JSON.stringify(recentLocationIds.slice(0, 8)));
+  }, [advancedId, advancedOpen, locationId, query, recentLocationIds, storageKey]);
 
   function resolveLocationId(rawValue: string) {
     const normalized = normalizeLookupValue(rawValue);
@@ -141,6 +165,20 @@ export function AssetLocationField({
   const matchedOption = locationId ? optionById.get(locationId) ?? null : null;
   const hasQuery = query.trim().length > 0;
   const unresolved = hasQuery && !matchedOption;
+  const normalizedQuery = normalizeLookupValue(query);
+  const suggestionOptions = options.filter((option) => matchesOption(option, normalizedQuery)).slice(0, 8);
+  const recentOptions = recentLocationIds
+    .map((id) => optionById.get(id))
+    .filter((option): option is AssetLocationOption => Boolean(option))
+    .filter((option) => option.id !== locationId)
+    .slice(0, 5);
+
+  function selectOption(option: AssetLocationOption) {
+    setLocationId(option.id);
+    setAdvancedId(option.id);
+    setQuery(option.path);
+    setRecentLocationIds((current) => [option.id, ...current.filter((id) => id !== option.id)].slice(0, 8));
+  }
 
   return (
     <div className="field-stack location-picker full-span">
@@ -148,7 +186,6 @@ export function AssetLocationField({
       <input type="hidden" id={inputId} name={inputName} value={locationId} />
       <input
         id={`${inputId}-search`}
-        list={`${inputId}-suggestions`}
         value={query}
         placeholder={labels.placeholder}
         onChange={(event) => {
@@ -161,12 +198,42 @@ export function AssetLocationField({
           }
         }}
       />
-      <datalist id={`${inputId}-suggestions`}>
-        <option value="">{emptyLabel}</option>
-        {options.map((option) => (
-          <option key={option.id} value={option.path} />
-        ))}
-      </datalist>
+
+      {!hasQuery && recentOptions.length ? (
+        <div className="location-picker-results">
+          <div className="location-picker-results-title">{label}</div>
+          {recentOptions.map((option) => (
+            <button
+              key={`recent-${option.id}`}
+              type="button"
+              className="location-picker-option"
+              onClick={() => selectOption(option)}
+            >
+              <span className="location-picker-option-path">{option.path}</span>
+              {option.code ? <span className="location-picker-option-meta">{option.code}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {hasQuery && suggestionOptions.length ? (
+        <div className="location-picker-results">
+          {suggestionOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className="location-picker-option"
+              onClick={() => selectOption(option)}
+            >
+              <span className="location-picker-option-path">{option.path}</span>
+              <span className="location-picker-option-meta">
+                {[option.code, option.nameEn, option.nameZh].filter(Boolean).join(" · ")}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <p className="muted">{labels.help}</p>
       {matchedOption ? (
         <p className="muted">
@@ -199,7 +266,7 @@ export function AssetLocationField({
               const nextOption = optionById.get(nextId);
               setLocationId(nextOption?.id ?? "");
               if (nextOption) {
-                setQuery(nextOption.path);
+                selectOption(nextOption);
               }
             }}
           />
