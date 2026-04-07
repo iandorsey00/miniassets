@@ -83,19 +83,22 @@ export function AssetRow({
   code,
   title,
   meta,
+  trailing,
 }: {
   href: string;
   code: string;
   title: string;
   meta: string;
+  trailing?: React.ReactNode;
 }) {
   return (
     <Link href={href} className="list-row">
-      <div>
+      <div className="asset-row-copy">
         <div className="asset-code">{code}</div>
         <strong>{title}</strong>
+        <span className="row-meta">{meta}</span>
       </div>
-      <span className="row-meta">{meta}</span>
+      {trailing ? <div className="asset-row-trailing">{trailing}</div> : null}
     </Link>
   );
 }

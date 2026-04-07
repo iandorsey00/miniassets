@@ -98,18 +98,19 @@ export default async function AssetsPage({
                 : data.dictionary.assets.currentLocationFallback;
 
             return (
-              <div key={asset.id} className="list-row">
-                <AssetRow
-                  href={`/assets/${asset.id}`}
-                  code={asset.assetCode}
-                  title={formatAssetLabel(data.locale, asset)}
-                  meta={path}
-                />
-                <Badge
-                  label={assetStatusLabels[asset.status][data.locale === "ZH_CN" ? "zh" : "en"]}
-                  tone={asset.status === "MISSING" ? "danger" : "neutral"}
-                />
-              </div>
+              <AssetRow
+                key={asset.id}
+                href={`/assets/${asset.id}`}
+                code={asset.assetCode}
+                title={formatAssetLabel(data.locale, asset)}
+                meta={path}
+                trailing={
+                  <Badge
+                    label={assetStatusLabels[asset.status][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    tone={asset.status === "MISSING" ? "danger" : "neutral"}
+                  />
+                }
+              />
             );
           })}
         </div>
