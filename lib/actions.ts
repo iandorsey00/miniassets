@@ -243,6 +243,39 @@ function collapseWhitespace(value: string | undefined) {
   return value?.replace(/\s+/g, " ").trim() || "";
 }
 
+function detectLocalizedScript(value: string | null | undefined) {
+  const normalized = collapseWhitespace(value || undefined);
+  if (!normalized) {
+    return "EN" as const;
+  }
+
+  const significantChars = Array.from(normalized).filter((char) => /[\p{L}\p{N}]/u.test(char));
+  if (!significantChars.length) {
+    return "EN" as const;
+  }
+
+  const hanChars = significantChars.filter((char) => /\p{Script=Han}/u.test(char));
+  return hanChars.length / significantChars.length >= 0.5 ? ("ZH_CN" as const) : ("EN" as const);
+}
+
+function normalizeLocalizedPair(nameEn: string | undefined, nameZh: string | undefined) {
+  const normalizedEn = collapseWhitespace(nameEn);
+  const normalizedZh = collapseWhitespace(nameZh);
+
+  if (normalizedEn && normalizedZh && normalizedEn === normalizedZh) {
+    const detectedLocale = detectLocalizedScript(normalizedEn);
+    return {
+      nameEn: detectedLocale === "EN" ? normalizedEn : "",
+      nameZh: detectedLocale === "ZH_CN" ? normalizedZh : "",
+    };
+  }
+
+  return {
+    nameEn: normalizedEn,
+    nameZh: normalizedZh,
+  };
+}
+
 async function generateNextAssetCode(workspaceId: string) {
   const existingCodes = await prisma.asset.findMany({
     where: { workspaceId },
@@ -755,12 +788,15 @@ export async function createAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
+  const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
+  const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
   const [assetCode, brand, model, variant, subvariant, barcodeSource] = await Promise.all([
     generateNextAssetCode(parsed.workspaceId),
     canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
-    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", parsed.variant),
-    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", parsed.subvariant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", normalizedVariant.nameEn),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", normalizedSubvariant.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "barcodeSource", parsed.barcodeSource),
   ]);
 
@@ -770,17 +806,17 @@ export async function createAssetAction(formData: FormData) {
       createdByUserId: user.id,
       currentLocationId: parsed.currentLocationId || null,
       assetCode,
-      nameEn: parsed.nameEn || null,
-      nameZh: parsed.nameZh || null,
+      nameEn: normalizedNames.nameEn || null,
+      nameZh: normalizedNames.nameZh || null,
       color: primaryColor || null,
       primaryColor: primaryColor || null,
       secondaryColor: secondaryColor || null,
       brand: brand || null,
       model: model || null,
       variant: variant || null,
-      variantZh: parsed.variantZh || null,
+      variantZh: normalizedVariant.nameZh || null,
       subvariant: subvariant || null,
-      subvariantZh: parsed.subvariantZh || null,
+      subvariantZh: normalizedSubvariant.nameZh || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,
@@ -862,11 +898,14 @@ export async function updateAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
+  const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
+  const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
   const [brand, model, variant, subvariant, barcodeSource] = await Promise.all([
     canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
-    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", parsed.variant),
-    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", parsed.subvariant),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "variant", normalizedVariant.nameEn),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", normalizedSubvariant.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "barcodeSource", parsed.barcodeSource),
   ]);
 
@@ -874,17 +913,17 @@ export async function updateAssetAction(formData: FormData) {
     where: { id: parsed.assetId },
     data: {
       currentLocationId: parsed.currentLocationId || null,
-      nameEn: parsed.nameEn || null,
-      nameZh: parsed.nameZh || null,
+      nameEn: normalizedNames.nameEn || null,
+      nameZh: normalizedNames.nameZh || null,
       color: primaryColor || null,
       primaryColor: primaryColor || null,
       secondaryColor: secondaryColor || null,
       brand: brand || null,
       model: model || null,
       variant: variant || null,
-      variantZh: parsed.variantZh || null,
+      variantZh: normalizedVariant.nameZh || null,
       subvariant: subvariant || null,
-      subvariantZh: parsed.subvariantZh || null,
+      subvariantZh: normalizedSubvariant.nameZh || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,

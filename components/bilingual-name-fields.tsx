@@ -52,25 +52,19 @@ export function BilingualNameFields({
     const detectedLocale = detectInputLocale(nextValue);
 
     if (origin === "EN") {
+      setEnglishValue(nextValue);
+
       if (detectedLocale === "ZH_CN" && !chineseDisabled && !chineseValue.trim()) {
         setChineseValue(nextValue);
-        setEnglishValue("");
-        setVisibleLocale("ZH_CN");
-        return;
       }
-
-      setEnglishValue(nextValue);
-      return;
-    }
-
-    if (detectedLocale === "EN" && !englishDisabled && !englishValue.trim()) {
-      setEnglishValue(nextValue);
-      setChineseValue("");
-      setVisibleLocale("EN");
       return;
     }
 
     setChineseValue(nextValue);
+
+    if (detectedLocale === "EN" && !englishDisabled && !englishValue.trim()) {
+      setEnglishValue(nextValue);
+    }
   }
 
   return (

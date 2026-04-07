@@ -119,6 +119,13 @@
   margin: 0;
 }
 
+.measurement-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: end;
+}
+
 .bilingual-toggle {
   display: inline-flex;
   gap: 0.45rem;
@@ -381,6 +388,10 @@ textarea {
 }
 
 @media (max-width: 640px) {
+  .measurement-pair {
+    grid-template-columns: 1fr;
+  }
+
   .location-form-card-grid {
     grid-template-columns: 1fr;
   }
