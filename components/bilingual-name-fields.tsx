@@ -17,6 +17,16 @@ type BilingualNameFieldsProps = {
   chineseDisabled?: boolean;
 };
 
+function detectInputLocale(value: string) {
+  const significantChars = Array.from(value).filter((char) => /[\p{L}\p{N}]/u.test(char));
+  if (!significantChars.length) {
+    return "EN" as const;
+  }
+
+  const hanChars = significantChars.filter((char) => /\p{Script=Han}/u.test(char));
+  return hanChars.length / significantChars.length >= 0.5 ? ("ZH_CN" as const) : ("EN" as const);
+}
+
 export function BilingualNameFields({
   locale,
   englishLabel,
@@ -32,9 +42,36 @@ export function BilingualNameFields({
 }: BilingualNameFieldsProps) {
   const sharedScope = useBilingualFieldsScope();
   const [localVisibleLocale, setLocalVisibleLocale] = useState<"ZH_CN" | "EN">(locale);
+  const [englishValue, setEnglishValue] = useState(defaultEnglishValue);
+  const [chineseValue, setChineseValue] = useState(defaultChineseValue);
   const visibleLocale = sharedScope?.visibleLocale ?? localVisibleLocale;
   const setVisibleLocale = sharedScope?.setVisibleLocale ?? setLocalVisibleLocale;
   const showLocalToggle = !sharedScope;
+
+  function routeValue(origin: "EN" | "ZH_CN", nextValue: string) {
+    const detectedLocale = detectInputLocale(nextValue);
+
+    if (origin === "EN") {
+      if (detectedLocale === "ZH_CN" && !chineseDisabled && !chineseValue.trim()) {
+        setChineseValue(nextValue);
+        setEnglishValue("");
+        setVisibleLocale("ZH_CN");
+        return;
+      }
+
+      setEnglishValue(nextValue);
+      return;
+    }
+
+    if (detectedLocale === "EN" && !englishDisabled && !englishValue.trim()) {
+      setEnglishValue(nextValue);
+      setChineseValue("");
+      setVisibleLocale("EN");
+      return;
+    }
+
+    setChineseValue(nextValue);
+  }
 
   return (
     <div className="bilingual-fields full-span">
@@ -62,7 +99,8 @@ export function BilingualNameFields({
         <input
           id={englishId}
           name={englishName}
-          defaultValue={defaultEnglishValue}
+          value={englishValue}
+          onChange={(event) => routeValue("EN", event.target.value)}
           disabled={englishDisabled}
         />
       </div>
@@ -72,7 +110,8 @@ export function BilingualNameFields({
         <input
           id={chineseId}
           name={chineseName}
-          defaultValue={defaultChineseValue}
+          value={chineseValue}
+          onChange={(event) => routeValue("ZH_CN", event.target.value)}
           disabled={chineseDisabled}
         />
       </div>

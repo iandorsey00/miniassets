@@ -1,10 +1,11 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
 import { AssetShareActions } from "@/components/asset-share-actions";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
-import { deleteAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
+import { deleteAssetAction, duplicateAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
   assetStatusLabels,
   assetUsageStateLabels,
@@ -59,7 +60,8 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.trackingMode}: ${trackingModeLabels[data.asset.trackingMode][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.usageState}: ${data.asset.usageState ? assetUsageStateLabels[data.asset.usageState][data.locale === "ZH_CN" ? "zh" : "en"] : "-"}`,
     `${data.dictionary.common.lowStock}: ${data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}`,
-    `${data.dictionary.common.quantity}: ${data.asset.quantity}`,
+    `${data.asset.isAssorted ? data.dictionary.common.estimatedQuantity : data.dictionary.common.quantity}: ${data.asset.quantity}`,
+    `${data.dictionary.common.assorted}: ${data.asset.isAssorted ? data.dictionary.common.yes : data.dictionary.common.no}`,
     `${data.dictionary.common.sensitivity}: ${sensitivityLabels[data.asset.sensitivityLevel][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.status}: ${assetStatusLabels[data.asset.status][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.primaryColor}: ${formatColorLabel(data.locale, data.asset.primaryColor || data.asset.color) || "-"}`,
@@ -130,11 +132,15 @@ export default async function AssetDetailPage({
               </span>
             </div>
             <div className="split-line">
+              <span>{data.dictionary.common.assorted}</span>
+              <span>{data.asset.isAssorted ? data.dictionary.common.yes : data.dictionary.common.no}</span>
+            </div>
+            <div className="split-line">
               <span>{data.dictionary.common.lowStock}</span>
               <span>{data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}</span>
             </div>
             <div className="split-line">
-              <span>{data.dictionary.common.quantity}</span>
+              <span>{data.asset.isAssorted ? data.dictionary.common.estimatedQuantity : data.dictionary.common.quantity}</span>
               <span>{data.asset.quantity}</span>
             </div>
             <div className="split-line">
@@ -489,10 +495,14 @@ export default async function AssetDetailPage({
               </select>
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="quantity">{data.dictionary.common.quantity}</label>
-              <input id="quantity" name="quantity" type="number" min="1" defaultValue={data.asset.quantity} />
-            </div>
+            <AssortedQuantityFields
+              assortedLabel={data.dictionary.common.assorted}
+              quantityLabel={data.dictionary.common.quantity}
+              estimatedQuantityLabel={data.dictionary.common.estimatedQuantity}
+              helpText={data.dictionary.assets.assortedHelp}
+              defaultAssorted={data.asset.isAssorted}
+              defaultQuantity={data.asset.quantity}
+            />
 
             <div className="field-stack">
               <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>
@@ -532,6 +542,15 @@ export default async function AssetDetailPage({
             <button type="submit">{data.dictionary.common.save}</button>
           </div>
         </form>
+        <div className="asset-utility-zone">
+          <p className="muted">{data.dictionary.assets.duplicateAssetHelp}</p>
+          <form action={duplicateAssetAction} className="asset-delete-form">
+            <input type="hidden" name="assetId" value={data.asset.id} />
+            <button type="submit" className="ghost-button">
+              {data.dictionary.assets.duplicateAsset}
+            </button>
+          </form>
+        </div>
         <div className="asset-danger-zone">
             <p className="muted">{data.dictionary.assets.deleteAssetHelp}</p>
             <form action={deleteAssetAction} className="asset-delete-form">

@@ -8,7 +8,13 @@ import { formatAssetLabel } from "@/lib/present";
 export default async function AssetsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ workspaceId?: string; q?: string; status?: "ACTIVE" | "MISSING" | "ARCHIVED" }>;
+  searchParams: Promise<{
+    workspaceId?: string;
+    q?: string;
+    status?: "ACTIVE" | "MISSING" | "ARCHIVED";
+    usageState?: "STORAGE" | "IN_USE";
+    assorted?: "true";
+  }>;
 }) {
   const params = await searchParams;
   const data = await getAssetsData(params);
@@ -55,6 +61,23 @@ export default async function AssetsPage({
                     {value[data.locale === "ZH_CN" ? "zh" : "en"]}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="usageStateFilter">{data.dictionary.common.usageState}</label>
+              <select id="usageStateFilter" name="usageState" defaultValue={params.usageState ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                <option value="STORAGE">{data.dictionary.common.storage}</option>
+                <option value="IN_USE">{data.dictionary.common.inUse}</option>
+              </select>
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="assortedFilter">{data.dictionary.common.assorted}</label>
+              <select id="assortedFilter" name="assorted" defaultValue={params.assorted ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                <option value="true">{data.dictionary.common.yes}</option>
               </select>
             </div>
 

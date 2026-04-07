@@ -125,6 +125,7 @@ const createAssetSchema = z
     netWeightValue: optionalPositiveNumber(100000),
     netWeightUnit: z.enum(["G", "KG"]).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
+    isAssorted: z.coerce.boolean().optional(),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
     usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
     isLowStock: z.coerce.boolean().optional(),
@@ -160,6 +161,7 @@ const updateAssetSchema = z
     netWeightValue: optionalPositiveNumber(100000),
     netWeightUnit: z.enum(["G", "KG"]).optional(),
     quantity: z.coerce.number().int().min(1).max(100000),
+    isAssorted: z.coerce.boolean().optional(),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
     usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
     isLowStock: z.coerce.boolean().optional(),
@@ -180,6 +182,10 @@ const moveAssetSchema = z.object({
 });
 
 const deleteAssetSchema = z.object({
+  assetId: z.string().min(1),
+});
+
+const duplicateAssetSchema = z.object({
   assetId: z.string().min(1),
 });
 
@@ -734,6 +740,7 @@ export async function createAssetAction(formData: FormData) {
     netWeightValue: formData.get("netWeightValue") || undefined,
     netWeightUnit: formData.get("netWeightUnit") || undefined,
     quantity: formData.get("quantity"),
+    isAssorted: formData.get("isAssorted") || undefined,
     trackingMode: formData.get("trackingMode"),
     usageState: formData.get("usageState") || undefined,
     isLowStock: formData.get("isLowStock") || undefined,
@@ -783,6 +790,7 @@ export async function createAssetAction(formData: FormData) {
       netWeightValue: parsed.netWeightValue || null,
       netWeightUnit: parsed.netWeightValue ? parsed.netWeightUnit || null : null,
       quantity: parsed.quantity,
+      isAssorted: Boolean(parsed.isAssorted),
       trackingMode: parsed.trackingMode,
       usageState: parsed.usageState || null,
       isLowStock: Boolean(parsed.isLowStock),
@@ -830,6 +838,7 @@ export async function updateAssetAction(formData: FormData) {
     netWeightValue: formData.get("netWeightValue") || undefined,
     netWeightUnit: formData.get("netWeightUnit") || undefined,
     quantity: formData.get("quantity"),
+    isAssorted: formData.get("isAssorted") || undefined,
     trackingMode: formData.get("trackingMode"),
     usageState: formData.get("usageState") || undefined,
     isLowStock: formData.get("isLowStock") || undefined,
@@ -885,6 +894,7 @@ export async function updateAssetAction(formData: FormData) {
       netWeightValue: parsed.netWeightValue || null,
       netWeightUnit: parsed.netWeightValue ? parsed.netWeightUnit || null : null,
       quantity: parsed.quantity,
+      isAssorted: Boolean(parsed.isAssorted),
       trackingMode: parsed.trackingMode,
       usageState: parsed.usageState || null,
       isLowStock: Boolean(parsed.isLowStock),
@@ -967,4 +977,75 @@ export async function deleteAssetAction(formData: FormData) {
 
   revalidateWorkspaceViews();
   redirect("/assets");
+}
+
+export async function duplicateAssetAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = duplicateAssetSchema.parse({
+    assetId: formData.get("assetId"),
+  });
+
+  const asset = await prisma.asset.findUnique({
+    where: { id: parsed.assetId },
+  });
+
+  if (!asset) {
+    throw new Error("Asset not found.");
+  }
+
+  const context = await getViewerContext(asset.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(asset.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const nextAssetCode = await generateNextAssetCode(asset.workspaceId);
+  const duplicatedAsset = await prisma.asset.create({
+    data: {
+      workspaceId: asset.workspaceId,
+      createdByUserId: user.id,
+      currentLocationId: asset.currentLocationId,
+      assetCode: nextAssetCode,
+      nameEn: asset.nameEn,
+      nameZh: asset.nameZh,
+      color: asset.color,
+      primaryColor: asset.primaryColor,
+      secondaryColor: asset.secondaryColor,
+      brand: asset.brand,
+      model: asset.model,
+      variant: asset.variant,
+      variantZh: asset.variantZh,
+      subvariant: asset.subvariant,
+      subvariantZh: asset.subvariantZh,
+      description: asset.description,
+      barcodeValue: asset.barcodeValue,
+      barcodeFormat: asset.barcodeFormat,
+      barcodeSource: asset.barcodeSource,
+      capacityValue: asset.capacityValue,
+      capacityUnit: asset.capacityUnit,
+      netWeightValue: asset.netWeightValue,
+      netWeightUnit: asset.netWeightUnit,
+      quantity: asset.quantity,
+      isAssorted: asset.isAssorted,
+      trackingMode: asset.trackingMode,
+      usageState: asset.usageState,
+      isLowStock: asset.isLowStock,
+      sensitivityLevel: asset.sensitivityLevel,
+      status: asset.status,
+      lastVerifiedAt: asset.currentLocationId ? new Date() : asset.lastVerifiedAt,
+      notes: asset.notes,
+      placements: asset.currentLocationId
+        ? {
+            create: {
+              movedByUserId: user.id,
+              locationId: asset.currentLocationId,
+              confidence: "VERIFIED",
+              note: `Duplicated from ${asset.assetCode}`,
+            },
+          }
+        : undefined,
+    },
+  });
+
+  revalidateWorkspaceViews();
+  redirect(`/assets/${duplicatedAsset.id}?saved=1`);
 }

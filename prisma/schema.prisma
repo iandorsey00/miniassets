@@ -206,6 +206,7 @@ model Asset {
   netWeightValue    Float?
   netWeightUnit     String?
   quantity          Int              @default(1)
+  isAssorted        Boolean          @default(false)
   trackingMode      TrackingMode     @default(INDIVIDUAL)
   usageState        AssetUsageState?
   isLowStock        Boolean          @default(false)

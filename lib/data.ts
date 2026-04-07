@@ -260,6 +260,8 @@ export async function getAssetsData(filters: {
   workspaceId?: string;
   q?: string;
   status?: AssetStatus;
+  usageState?: "STORAGE" | "IN_USE";
+  assorted?: "true";
 }) {
   const context = await getViewerContext(filters.workspaceId);
   if (!context.currentWorkspace) {
@@ -269,6 +271,8 @@ export async function getAssetsData(filters: {
   const where: Prisma.AssetWhereInput = {
     workspaceId: context.currentWorkspace.id,
     status: filters.status || undefined,
+    usageState: filters.usageState || undefined,
+    isAssorted: filters.assorted === "true" ? true : undefined,
   };
 
   const [assets, locations] = await Promise.all([
@@ -500,6 +504,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
       netWeightValue: asset.netWeightValue,
       netWeightUnit: asset.netWeightUnit,
       quantity: asset.quantity,
+      isAssorted: asset.isAssorted,
       trackingMode: asset.trackingMode,
       usageState: asset.usageState,
       isLowStock: asset.isLowStock,

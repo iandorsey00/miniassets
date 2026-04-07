@@ -1,5 +1,6 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { PageHeader, Panel } from "@/components/ui";
@@ -173,10 +174,13 @@ export default async function NewAssetPage({
               </select>
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="quantity">{data.dictionary.common.quantity}</label>
-              <input id="quantity" name="quantity" type="number" min="1" defaultValue="1" />
-            </div>
+            <AssortedQuantityFields
+              assortedLabel={data.dictionary.common.assorted}
+              quantityLabel={data.dictionary.common.quantity}
+              estimatedQuantityLabel={data.dictionary.common.estimatedQuantity}
+              helpText={data.dictionary.assets.assortedHelp}
+              defaultQuantity={1}
+            />
 
             <div className="field-stack">
               <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>

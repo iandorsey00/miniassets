@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { createLocationAction } from "@/lib/actions";
 import {
@@ -74,108 +75,121 @@ export function LocationCreateForm({
   const requireCustomNames = showPositionPreset && positionPreset === "OTHER";
 
   return (
-    <form action={createLocationAction} className="form-grid">
+    <form action={createLocationAction} className="form-grid location-create-form">
       <input type="hidden" name="workspaceId" value={workspaceId} />
 
-      <div className="field-stack">
-        <label htmlFor="parentId">{dictionary.locations.parent}</label>
-        <select
-          id="parentId"
-          name="parentId"
-          value={parentId}
-          onChange={(event) => {
-            const nextParentId = event.target.value;
-            const nextParentKind = locations.find((location) => location.id === nextParentId)?.kind ?? null;
-            const nextAllowedKinds = getAllowedLocationKinds(nextParentKind);
-            setParentId(nextParentId);
-            setKind((currentKind) => (nextAllowedKinds.includes(currentKind) ? currentKind : (nextAllowedKinds[0] ?? "HOUSE")));
-          }}
-        >
-          <option value="">{dictionary.locations.topLevel}</option>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {location.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="field-stack">
-        <label htmlFor="kind">{dictionary.locations.type}</label>
-        <select
-          id="kind"
-          name="kind"
-          value={selectedKind}
-          onChange={(event) => setKind(event.target.value as LocationKind)}
-        >
-          {allowedKindGroups.map((group) => (
-            <optgroup
-              key={group.group}
-              label={
-                group.group === "STRUCTURE"
-                  ? dictionary.locations.typeGroupStructure
-                  : group.group === "STORAGE"
-                    ? dictionary.locations.typeGroupStorage
-                    : dictionary.locations.typeGroupCoordinates
-              }
+      <div className="location-form-card full-span">
+        <div className="location-form-card-grid">
+          <div className="field-stack">
+            <label htmlFor="parentId">{dictionary.locations.parent}</label>
+            <select
+              id="parentId"
+              name="parentId"
+              value={parentId}
+              onChange={(event) => {
+                const nextParentId = event.target.value;
+                const nextParentKind = locations.find((location) => location.id === nextParentId)?.kind ?? null;
+                const nextAllowedKinds = getAllowedLocationKinds(nextParentKind);
+                setParentId(nextParentId);
+                setKind((currentKind) => (nextAllowedKinds.includes(currentKind) ? currentKind : (nextAllowedKinds[0] ?? "HOUSE")));
+              }}
             >
-              {group.kinds.map((value) => (
-                <option key={value} value={value}>
-                  {locationKindLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
+              <option value="">{dictionary.locations.topLevel}</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.label}
                 </option>
               ))}
-            </optgroup>
-          ))}
-        </select>
-        <p className="muted">{dictionary.locations.typeHelp}</p>
+            </select>
+          </div>
+
+          <div className="field-stack">
+            <label htmlFor="kind">{dictionary.locations.type}</label>
+            <select
+              id="kind"
+              name="kind"
+              value={selectedKind}
+              onChange={(event) => setKind(event.target.value as LocationKind)}
+            >
+              {allowedKindGroups.map((group) => (
+                <optgroup
+                  key={group.group}
+                  label={
+                    group.group === "STRUCTURE"
+                      ? dictionary.locations.typeGroupStructure
+                      : group.group === "STORAGE"
+                        ? dictionary.locations.typeGroupStorage
+                        : dictionary.locations.typeGroupCoordinates
+                  }
+                >
+                  {group.kinds.map((value) => (
+                    <option key={value} value={value}>
+                      {locationKindLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          <div className="field-stack">
+            <label htmlFor="code">{dictionary.locations.code}</label>
+            <input
+              id="code"
+              name="code"
+              inputMode={numericCode ? "numeric" : undefined}
+              pattern={numericCode ? "[0-9]*" : undefined}
+              placeholder={numericCode ? "1" : "R1-C2"}
+            />
+          </div>
+
+          {showPositionPreset ? (
+            <div className="field-stack">
+              <label htmlFor="positionPreset">{dictionary.locations.positionPreset}</label>
+              <select
+                id="positionPreset"
+                name="positionPreset"
+                value={positionPreset}
+                onChange={(event) => setPositionPreset(event.target.value as (typeof positionPresetValues)[number])}
+              >
+                {positionPresetValues.map((value) => (
+                  <option key={value} value={value}>
+                    {positionPresetLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="location-form-helper muted">
+          <p>{dictionary.locations.typeHelp}</p>
+          {numericCode ? <p>{dictionary.locations.numericCodeHint}</p> : null}
+          {showPositionPreset ? <p>{dictionary.locations.positionPresetHelp}</p> : null}
+        </div>
       </div>
 
-      <BilingualNameFields
-        locale={locale}
-        englishLabel={dictionary.common.englishName}
-        chineseLabel={dictionary.common.chineseName}
-        englishDisabled={showPositionPreset && !requireCustomNames}
-        chineseDisabled={showPositionPreset && !requireCustomNames}
-      />
-
-      {showPositionPreset ? (
-        <div className="field-stack">
-          <label htmlFor="positionPreset">{dictionary.locations.positionPreset}</label>
-          <select
-            id="positionPreset"
-            name="positionPreset"
-            value={positionPreset}
-            onChange={(event) => setPositionPreset(event.target.value as (typeof positionPresetValues)[number])}
-          >
-            {positionPresetValues.map((value) => (
-              <option key={value} value={value}>
-                {positionPresetLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
-              </option>
-            ))}
-          </select>
-          <p className="muted">{dictionary.locations.positionPresetHelp}</p>
-        </div>
-      ) : null}
+      <div className="location-form-card full-span">
+        <BilingualFieldsScope locale={locale} label={locale === "ZH_CN" ? "输入语言" : "Entry language"}>
+          <BilingualNameFields
+            locale={locale}
+            englishLabel={dictionary.common.englishName}
+            chineseLabel={dictionary.common.chineseName}
+            englishDisabled={showPositionPreset && !requireCustomNames}
+            chineseDisabled={showPositionPreset && !requireCustomNames}
+          />
+        </BilingualFieldsScope>
+      </div>
 
       {showPositionPreset ? (
         <input type="hidden" name="positionPreset" value={positionPreset} />
       ) : null}
 
-      <div className="field-stack">
-        <label htmlFor="code">{dictionary.locations.code}</label>
-        <input
-          id="code"
-          name="code"
-          inputMode={numericCode ? "numeric" : undefined}
-          pattern={numericCode ? "[0-9]*" : undefined}
-          placeholder={numericCode ? "1" : "R1-C2"}
-        />
-        {numericCode ? <p className="muted">{dictionary.locations.numericCodeHint}</p> : null}
-      </div>
-
-      <div className="field-stack full-span">
-        <label htmlFor="notes">{dictionary.common.notes}</label>
-        <textarea id="notes" name="notes" />
+      <div className="location-form-card full-span">
+        <div className="field-stack full-span">
+          <label htmlFor="notes">{dictionary.common.notes}</label>
+          <textarea id="notes" name="notes" />
+        </div>
       </div>
 
       <div className="full-span">
