@@ -1,4 +1,10 @@
-import { capacityUnitLabels, commonColorLabels, netWeightUnitLabels } from "@/lib/constants";
+import {
+  capacityUnitLabels,
+  commonColorLabels,
+  commonSizeLabels,
+  lengthUnitLabels,
+  netWeightUnitLabels,
+} from "@/lib/constants";
 import type { AppLocale } from "@/lib/i18n";
 
 export function pickLocalizedText(
@@ -53,6 +59,20 @@ export function formatColorLabel(locale: AppLocale, value: string | null | undef
   return localized ? localized[locale === "ZH_CN" ? "zh" : "en"] : normalized;
 }
 
+export function formatSizeLabel(locale: AppLocale, value: string | null | undefined) {
+  const normalized = value?.trim() || "";
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized === "One size" || normalized === "均码") {
+    return commonSizeLabels.ONE_SIZE[locale === "ZH_CN" ? "zh" : "en"];
+  }
+
+  const localized = commonSizeLabels[normalized as keyof typeof commonSizeLabels];
+  return localized ? localized[locale === "ZH_CN" ? "zh" : "en"] : normalized;
+}
+
 export function formatAssetLabel(
   locale: AppLocale,
   values: {
@@ -67,6 +87,9 @@ export function formatAssetLabel(
     variantZh?: string | null;
     subvariant?: string | null;
     subvariantZh?: string | null;
+    size?: string | null;
+    lengthValue?: number | null;
+    lengthUnit?: string | null;
     capacityValue?: number | null;
     capacityUnit?: string | null;
     netWeightValue?: number | null;
@@ -82,6 +105,7 @@ export function formatAssetLabel(
     locale === "ZH_CN"
       ? values.subvariantZh?.trim() || values.subvariant?.trim() || ""
       : values.subvariant?.trim() || values.subvariantZh?.trim() || "";
+  const length = formatMeasurement(locale, values.lengthValue, values.lengthUnit, lengthUnitLabels);
   const capacity = formatMeasurement(locale, values.capacityValue, values.capacityUnit, capacityUnitLabels);
   const netWeight = formatMeasurement(locale, values.netWeightValue, values.netWeightUnit, netWeightUnitLabels);
   const segments = [
@@ -91,7 +115,9 @@ export function formatAssetLabel(
     values.brand?.trim() || "",
     variant,
     subvariant,
+    formatSizeLabel(locale, values.size),
     options?.includeModel ? values.model?.trim() || "" : "",
+    length,
     capacity,
     netWeight,
   ].filter(Boolean);

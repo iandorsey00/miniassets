@@ -116,10 +116,13 @@ const createAssetSchema = z
     variantZh: z.string().trim().max(80).optional(),
     subvariant: z.string().trim().max(80).optional(),
     subvariantZh: z.string().trim().max(80).optional(),
+    size: z.string().trim().max(40).optional(),
     description: z.string().trim().max(1000).optional(),
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
     barcodeSource: z.string().trim().max(64).optional(),
+    lengthValue: optionalPositiveNumber(100000),
+    lengthUnit: z.enum(["MM", "CM", "M"]).optional(),
     capacityValue: optionalPositiveNumber(100000),
     capacityUnit: z.enum(["ML", "L"]).optional(),
     netWeightValue: optionalPositiveNumber(100000),
@@ -152,10 +155,13 @@ const updateAssetSchema = z
     variantZh: z.string().trim().max(80).optional(),
     subvariant: z.string().trim().max(80).optional(),
     subvariantZh: z.string().trim().max(80).optional(),
+    size: z.string().trim().max(40).optional(),
     description: z.string().trim().max(1000).optional(),
     barcodeValue: z.string().trim().max(64).optional(),
     barcodeFormat: z.string().trim().max(32).optional(),
     barcodeSource: z.string().trim().max(64).optional(),
+    lengthValue: optionalPositiveNumber(100000),
+    lengthUnit: z.enum(["MM", "CM", "M"]).optional(),
     capacityValue: optionalPositiveNumber(100000),
     capacityUnit: z.enum(["ML", "L"]).optional(),
     netWeightValue: optionalPositiveNumber(100000),
@@ -322,6 +328,24 @@ function normalizeColorValue(value: string | undefined) {
 function normalizeDescriptorValue(value: string | undefined) {
   const collapsed = collapseWhitespace(value);
   return collapsed ? toTitleCase(collapsed) : "";
+}
+
+function normalizeSizeValue(value: string | undefined) {
+  const collapsed = collapseWhitespace(value);
+  if (!collapsed) {
+    return "";
+  }
+
+  const upper = collapsed.toUpperCase();
+  if (["3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL", "3XL"].includes(upper)) {
+    return upper;
+  }
+
+  if (["ONE_SIZE", "ONE SIZE", "ONESIZE", "均码"].includes(upper) || collapsed === "均码") {
+    return "ONE_SIZE";
+  }
+
+  return collapsed;
 }
 
 async function canonicalizeWorkspaceValue(
@@ -774,10 +798,13 @@ export async function createAssetAction(formData: FormData) {
     variantZh: formData.get("variantZh") || undefined,
     subvariant: formData.get("subvariant") || undefined,
     subvariantZh: formData.get("subvariantZh") || undefined,
+    size: formData.get("size") || undefined,
     description: formData.get("description") || undefined,
     barcodeValue: formData.get("barcodeValue") || undefined,
     barcodeFormat: formData.get("barcodeFormat") || undefined,
     barcodeSource: formData.get("barcodeSource") || undefined,
+    lengthValue: formData.get("lengthValue") || undefined,
+    lengthUnit: formData.get("lengthUnit") || undefined,
     capacityValue: formData.get("capacityValue") || undefined,
     capacityUnit: formData.get("capacityUnit") || undefined,
     netWeightValue: formData.get("netWeightValue") || undefined,
@@ -798,6 +825,7 @@ export async function createAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const size = normalizeSizeValue(parsed.size);
   const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
   const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
   const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
@@ -827,10 +855,13 @@ export async function createAssetAction(formData: FormData) {
       variantZh: normalizedVariant.nameZh || null,
       subvariant: subvariant || null,
       subvariantZh: normalizedSubvariant.nameZh || null,
+      size: size || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,
       barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual" : null),
+      lengthValue: parsed.lengthValue || null,
+      lengthUnit: parsed.lengthValue ? parsed.lengthUnit || null : null,
       capacityValue: parsed.capacityValue || null,
       capacityUnit: parsed.capacityValue ? parsed.capacityUnit || null : null,
       netWeightValue: parsed.netWeightValue || null,
@@ -875,10 +906,13 @@ export async function updateAssetAction(formData: FormData) {
     variantZh: formData.get("variantZh") || undefined,
     subvariant: formData.get("subvariant") || undefined,
     subvariantZh: formData.get("subvariantZh") || undefined,
+    size: formData.get("size") || undefined,
     description: formData.get("description") || undefined,
     barcodeValue: formData.get("barcodeValue") || undefined,
     barcodeFormat: formData.get("barcodeFormat") || undefined,
     barcodeSource: formData.get("barcodeSource") || undefined,
+    lengthValue: formData.get("lengthValue") || undefined,
+    lengthUnit: formData.get("lengthUnit") || undefined,
     capacityValue: formData.get("capacityValue") || undefined,
     capacityUnit: formData.get("capacityUnit") || undefined,
     netWeightValue: formData.get("netWeightValue") || undefined,
@@ -908,6 +942,7 @@ export async function updateAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const size = normalizeSizeValue(parsed.size);
   const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
   const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
   const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
@@ -934,10 +969,13 @@ export async function updateAssetAction(formData: FormData) {
       variantZh: normalizedVariant.nameZh || null,
       subvariant: subvariant || null,
       subvariantZh: normalizedSubvariant.nameZh || null,
+      size: size || null,
       description: parsed.description || null,
       barcodeValue: parsed.barcodeValue || null,
       barcodeFormat: parsed.barcodeFormat || null,
       barcodeSource: barcodeSource || (parsed.barcodeValue ? "manual-or-scan" : null),
+      lengthValue: parsed.lengthValue || null,
+      lengthUnit: parsed.lengthValue ? parsed.lengthUnit || null : null,
       capacityValue: parsed.capacityValue || null,
       capacityUnit: parsed.capacityValue ? parsed.capacityUnit || null : null,
       netWeightValue: parsed.netWeightValue || null,
@@ -1074,10 +1112,13 @@ export async function duplicateAssetAction(formData: FormData) {
       variantZh: asset.variantZh,
       subvariant: asset.subvariant,
       subvariantZh: asset.subvariantZh,
+      size: asset.size,
       description: asset.description,
       barcodeValue: asset.barcodeValue,
       barcodeFormat: asset.barcodeFormat,
       barcodeSource: asset.barcodeSource,
+      lengthValue: asset.lengthValue,
+      lengthUnit: asset.lengthUnit,
       capacityValue: asset.capacityValue,
       capacityUnit: asset.capacityUnit,
       netWeightValue: asset.netWeightValue,

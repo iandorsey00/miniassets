@@ -193,6 +193,39 @@ export const netWeightUnitLabels = {
   KG: { zh: "千克", en: "kg" },
 } as const;
 
+export const lengthUnitValues = ["MM", "CM", "M"] as const;
+export const lengthUnitLabels = {
+  MM: { zh: "毫米", en: "mm" },
+  CM: { zh: "厘米", en: "cm" },
+  M: { zh: "米", en: "m" },
+} as const;
+
+export const commonSizeValues = [
+  "3XS",
+  "2XS",
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "3XL",
+  "ONE_SIZE",
+] as const;
+
+export const commonSizeLabels: Record<(typeof commonSizeValues)[number], { zh: string; en: string }> = {
+  "3XS": { zh: "3XS", en: "3XS" },
+  "2XS": { zh: "2XS", en: "2XS" },
+  XS: { zh: "XS", en: "XS" },
+  S: { zh: "S", en: "S" },
+  M: { zh: "M", en: "M" },
+  L: { zh: "L", en: "L" },
+  XL: { zh: "XL", en: "XL" },
+  "2XL": { zh: "2XL", en: "2XL" },
+  "3XL": { zh: "3XL", en: "3XL" },
+  ONE_SIZE: { zh: "均码", en: "One size" },
+} as const;
+
 export const assetStatusLabels = {
   ACTIVE: { zh: "在管", en: "Active" },
   MISSING: { zh: "待寻找", en: "Missing" },

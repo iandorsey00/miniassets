@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
-import { formatAssetLabel, formatColorLabel, pickLocalizedText } from "@/lib/present";
+import { formatAssetLabel, formatColorLabel, formatSizeLabel, pickLocalizedText } from "@/lib/present";
 import { prisma } from "@/lib/prisma";
 
 export async function getPreferencesForLayout() {
@@ -175,6 +175,7 @@ async function getAssetFieldSuggestions(workspaceId: string) {
       variantZh: true,
       subvariant: true,
       subvariantZh: true,
+      size: true,
       barcodeSource: true,
     },
   });
@@ -186,6 +187,7 @@ async function getAssetFieldSuggestions(workspaceId: string) {
     models: uniqueSorted(assets.map((asset) => asset.model)),
     variants: uniqueSorted(assets.map((asset) => asset.variant)),
     subvariants: uniqueSorted(assets.map((asset) => asset.subvariant)),
+    sizes: uniqueSorted(assets.map((asset) => asset.size)),
     barcodeSources: uniqueSorted(assets.map((asset) => asset.barcodeSource)),
   };
 }
@@ -204,6 +206,9 @@ function buildAssetSearchText(
     variantZh: string | null;
     subvariant: string | null;
     subvariantZh: string | null;
+    size: string | null;
+    lengthValue: number | null;
+    lengthUnit: string | null;
     barcodeValue: string | null;
     description: string | null;
     notes: string | null;
@@ -223,6 +228,10 @@ function buildAssetSearchText(
     formatAssetLabel("ZH_CN", asset, { includeModel: true }),
     asset.variantZh,
     asset.subvariantZh,
+    formatSizeLabel("EN", asset.size),
+    formatSizeLabel("ZH_CN", asset.size),
+    asset.lengthValue ? String(asset.lengthValue) : "",
+    asset.lengthUnit,
     asset.barcodeValue,
     asset.description,
     asset.notes,
@@ -389,6 +398,7 @@ export async function getLocationsData(workspaceId?: string) {
         models: [],
         variants: [],
         subvariants: [],
+        sizes: [],
         barcodeSources: [],
       },
     };
@@ -531,10 +541,13 @@ export async function exportWorkspaceData(workspaceId?: string) {
       variantZh: asset.variantZh,
       subvariant: asset.subvariant,
       subvariantZh: asset.subvariantZh,
+      size: asset.size,
       description: asset.description,
       barcodeValue: asset.barcodeValue,
       barcodeFormat: asset.barcodeFormat,
       barcodeSource: asset.barcodeSource,
+      lengthValue: asset.lengthValue,
+      lengthUnit: asset.lengthUnit,
       capacityValue: asset.capacityValue,
       capacityUnit: asset.capacityUnit,
       netWeightValue: asset.netWeightValue,

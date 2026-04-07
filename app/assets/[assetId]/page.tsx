@@ -14,6 +14,10 @@ import {
   capacityUnitValues,
   commonColorValues,
   commonColorLabels,
+  commonSizeLabels,
+  commonSizeValues,
+  lengthUnitLabels,
+  lengthUnitValues,
   netWeightUnitLabels,
   netWeightUnitValues,
   placementConfidenceLabels,
@@ -21,7 +25,7 @@ import {
   trackingModeLabels,
 } from "@/lib/constants";
 import { buildLocationPath, getAssetDetail, movementTone } from "@/lib/data";
-import { formatAssetLabel, formatColorLabel, formatDateTime } from "@/lib/present";
+import { formatAssetLabel, formatColorLabel, formatDateTime, formatSizeLabel } from "@/lib/present";
 
 export default async function AssetDetailPage({
   params,
@@ -43,6 +47,7 @@ export default async function AssetDetailPage({
     models: [],
     variants: [],
     subvariants: [],
+    sizes: [],
     barcodeSources: [],
   };
   const locationOptions = data.locations.map((location) => ({
@@ -71,9 +76,11 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.model}: ${data.asset.model || "-"}`,
     `${data.dictionary.common.variant}: ${data.locale === "ZH_CN" ? data.asset.variantZh || data.asset.variant || "-" : data.asset.variant || data.asset.variantZh || "-"}`,
     `${data.dictionary.common.subvariant}: ${data.locale === "ZH_CN" ? data.asset.subvariantZh || data.asset.subvariant || "-" : data.asset.subvariant || data.asset.subvariantZh || "-"}`,
+    `${data.dictionary.common.size}: ${formatSizeLabel(data.locale, data.asset.size) || "-"}`,
     `${data.dictionary.common.barcode}: ${data.asset.barcodeValue || "-"}`,
     `${data.dictionary.common.barcodeFormat}: ${data.asset.barcodeFormat || "-"}`,
     `${data.dictionary.common.barcodeSource}: ${data.asset.barcodeSource || "-"}`,
+    `${data.dictionary.common.length}: ${data.asset.lengthValue && data.asset.lengthUnit ? `${data.asset.lengthValue} ${lengthUnitLabels[data.asset.lengthUnit as keyof typeof lengthUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}` : "-"}`,
     `${data.dictionary.common.capacity}: ${data.asset.capacityValue && data.asset.capacityUnit ? `${data.asset.capacityValue} ${capacityUnitLabels[data.asset.capacityUnit as keyof typeof capacityUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}` : "-"}`,
     `${data.dictionary.common.netWeight}: ${data.asset.netWeightValue && data.asset.netWeightUnit ? `${data.asset.netWeightValue} ${netWeightUnitLabels[data.asset.netWeightUnit as keyof typeof netWeightUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}` : "-"}`,
     `${data.dictionary.common.lastVerified}: ${formatDateTime(data.asset.lastVerifiedAt, data.localeCode)}`,
@@ -180,6 +187,10 @@ export default async function AssetDetailPage({
               <span>{data.locale === "ZH_CN" ? data.asset.subvariantZh || data.asset.subvariant || "-" : data.asset.subvariant || data.asset.subvariantZh || "-"}</span>
             </div>
             <div className="split-line">
+              <span>{data.dictionary.common.size}</span>
+              <span>{formatSizeLabel(data.locale, data.asset.size) || "-"}</span>
+            </div>
+            <div className="split-line">
               <span>{data.dictionary.common.barcode}</span>
               <span>{data.asset.barcodeValue || "-"}</span>
             </div>
@@ -190,6 +201,14 @@ export default async function AssetDetailPage({
             <div className="split-line">
               <span>{data.dictionary.common.barcodeSource}</span>
               <span>{data.asset.barcodeSource || "-"}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.length}</span>
+              <span>
+                {data.asset.lengthValue && data.asset.lengthUnit
+                  ? `${data.asset.lengthValue} ${lengthUnitLabels[data.asset.lengthUnit as keyof typeof lengthUnitLabels][data.locale === "ZH_CN" ? "zh" : "en"]}`
+                  : "-"}
+              </span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.capacity}</span>
@@ -363,6 +382,11 @@ export default async function AssetDetailPage({
               <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
             </div>
 
+            <div className="field-stack">
+              <label htmlFor="size">{data.dictionary.common.size}</label>
+              <input id="size" name="size" list="sizeSuggestions" defaultValue={data.asset.size ?? ""} />
+            </div>
+
             <BilingualNameFields
               locale={data.locale}
               englishLabel={data.dictionary.common.variant}
@@ -407,6 +431,32 @@ export default async function AssetDetailPage({
               defaultValue={data.asset.barcodeSource ?? ""}
             />
           </div>
+
+            <div className="measurement-pair full-span">
+              <div className="field-stack">
+                <label htmlFor="lengthValue">{data.dictionary.common.length}</label>
+                <input
+                  id="lengthValue"
+                  name="lengthValue"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={data.asset.lengthValue ?? ""}
+                />
+              </div>
+
+              <div className="field-stack">
+                <label htmlFor="lengthUnit">{data.dictionary.common.unit}</label>
+                <select id="lengthUnit" name="lengthUnit" defaultValue={data.asset.lengthUnit ?? ""}>
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {lengthUnitValues.map((value) => (
+                    <option key={value} value={value}>
+                      {lengthUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className="measurement-pair full-span">
               <div className="field-stack">
@@ -561,6 +611,17 @@ export default async function AssetDetailPage({
         <datalist id="variantSuggestions">
           {suggestions.variants.map((value) => (
             <option key={`variant-${value}`} value={value} />
+          ))}
+        </datalist>
+        <datalist id="sizeSuggestions">
+          {commonSizeValues.map((value) => (
+            <option
+              key={`size-${value}`}
+              value={value === "ONE_SIZE" ? commonSizeLabels[value][data.locale === "ZH_CN" ? "zh" : "en"] : value}
+            />
+          ))}
+          {suggestions.sizes.map((value) => (
+            <option key={`size-custom-${value}`} value={value} />
           ))}
         </datalist>
         <datalist id="subvariantSuggestions">

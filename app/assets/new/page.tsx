@@ -11,6 +11,10 @@ import {
   capacityUnitValues,
   commonColorValues,
   commonColorLabels,
+  commonSizeLabels,
+  commonSizeValues,
+  lengthUnitLabels,
+  lengthUnitValues,
   netWeightUnitLabels,
   netWeightUnitValues,
   sensitivityLabels,
@@ -120,6 +124,11 @@ export default async function NewAssetPage({
                 <input id="model" name="model" list="modelSuggestions" />
               </div>
 
+              <div className="field-stack">
+                <label htmlFor="size">{data.dictionary.common.size}</label>
+                <input id="size" name="size" list="sizeSuggestions" />
+              </div>
+
               <BilingualNameFields
                 locale={data.locale}
                 englishLabel={data.dictionary.common.variant}
@@ -207,6 +216,25 @@ export default async function NewAssetPage({
 
             <div className="measurement-pair full-span">
               <div className="field-stack">
+                <label htmlFor="lengthValue">{data.dictionary.common.length}</label>
+                <input id="lengthValue" name="lengthValue" type="number" min="0" step="0.01" />
+              </div>
+
+              <div className="field-stack">
+                <label htmlFor="lengthUnit">{data.dictionary.common.unit}</label>
+                <select id="lengthUnit" name="lengthUnit" defaultValue="">
+                  <option value="">{data.dictionary.common.optional}</option>
+                  {lengthUnitValues.map((value) => (
+                    <option key={value} value={value}>
+                      {lengthUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="measurement-pair full-span">
+              <div className="field-stack">
                 <label htmlFor="capacityValue">{data.dictionary.common.capacity}</label>
                 <input id="capacityValue" name="capacityValue" type="number" min="0" step="0.01" />
               </div>
@@ -266,6 +294,17 @@ export default async function NewAssetPage({
           <datalist id="modelSuggestions">
             {data.assetFieldSuggestions.models.map((value) => (
               <option key={`model-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="sizeSuggestions">
+            {commonSizeValues.map((value) => (
+              <option
+                key={`size-${value}`}
+                value={value === "ONE_SIZE" ? commonSizeLabels[value][data.locale === "ZH_CN" ? "zh" : "en"] : value}
+              />
+            ))}
+            {data.assetFieldSuggestions.sizes.map((value) => (
+              <option key={`size-custom-${value}`} value={value} />
             ))}
           </datalist>
           <datalist id="variantSuggestions">

@@ -201,6 +201,9 @@ model Asset {
   barcodeValue      String?
   barcodeFormat     String?
   barcodeSource     String?
+  size              String?
+  lengthValue       Float?
+  lengthUnit        String?
   capacityValue     Float?
   capacityUnit      String?
   netWeightValue    Float?
