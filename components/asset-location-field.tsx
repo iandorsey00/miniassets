@@ -18,6 +18,7 @@ type AssetLocationFieldProps = {
   emptyLabel: string;
   options: AssetLocationOption[];
   storageKey?: string;
+  onSelectionChange?: (selection: { locationId: string; isResolved: boolean }) => void;
   labels: {
     placeholder: string;
     help: string;
@@ -52,6 +53,7 @@ export function AssetLocationField({
   emptyLabel,
   options,
   storageKey,
+  onSelectionChange,
   labels,
 }: AssetLocationFieldProps) {
   const optionById = useMemo(() => new Map(options.map((option) => [option.id, option])), [options]);
@@ -179,6 +181,13 @@ export function AssetLocationField({
     setQuery(option.path);
     setRecentLocationIds((current) => [option.id, ...current.filter((id) => id !== option.id)].slice(0, 8));
   }
+
+  useEffect(() => {
+    onSelectionChange?.({
+      locationId,
+      isResolved: Boolean(locationId && matchedOption),
+    });
+  }, [locationId, matchedOption, onSelectionChange]);
 
   return (
     <div className="field-stack location-picker full-span">

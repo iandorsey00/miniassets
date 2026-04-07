@@ -3,7 +3,13 @@ import { cookies } from "next/headers";
 
 import { SHARED_PREFERENCE_COOKIE_NAMES } from "@/lib/auth-config";
 import { requireUser } from "@/lib/auth";
-import { ACCENT_COOKIE, LOCALE_COOKIE, THEME_COOKIE, WORKSPACE_COOKIE } from "@/lib/constants";
+import {
+  ACCENT_COOKIE,
+  LOCALE_COOKIE,
+  THEME_COOKIE,
+  WORKSPACE_COOKIE,
+  locationKindLabels,
+} from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n";
 import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { formatAssetLabel, formatColorLabel, pickLocalizedText } from "@/lib/present";
@@ -95,15 +101,45 @@ export async function getViewerContext(requestedWorkspaceId?: string) {
   };
 }
 
+function formatLocationSegmentLabel<
+  T extends {
+    id: string;
+    nameEn?: string | null;
+    nameZh?: string | null;
+    code?: string | null;
+    kind?: keyof typeof locationKindLabels | null;
+  },
+>(node: T, locale: "ZH_CN" | "EN") {
+  const localizedName = pickLocalizedText(locale, node);
+  if (localizedName) {
+    return localizedName;
+  }
+
+  const normalizedCode = node.code?.trim() || "";
+  if (normalizedCode && node.kind && locationKindLabels[node.kind]) {
+    const kindLabel = locationKindLabels[node.kind][locale === "ZH_CN" ? "zh" : "en"];
+    return `${kindLabel} ${normalizedCode}`;
+  }
+
+  return normalizedCode || node.id;
+}
+
 export function buildLocationPath<
-  T extends { id: string; parentId: string | null; nameEn: string | null; nameZh: string | null }
+  T extends {
+    id: string;
+    parentId: string | null;
+    nameEn?: string | null;
+    nameZh?: string | null;
+    code?: string | null;
+    kind?: keyof typeof locationKindLabels | null;
+  },
 >(nodes: T[], locationId: string, locale: "ZH_CN" | "EN") {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const segments: string[] = [];
   let current = byId.get(locationId) ?? null;
 
   while (current) {
-    const label = pickLocalizedText(locale, current);
+    const label = formatLocationSegmentLabel(current, locale);
     if (label) {
       segments.unshift(label);
     }

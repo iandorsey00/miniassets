@@ -1,5 +1,6 @@
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { AssetMoveForm } from "@/components/asset-move-form";
 import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
 import { AssetShareActions } from "@/components/asset-share-actions";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
@@ -27,7 +28,7 @@ export default async function AssetDetailPage({
   searchParams,
 }: {
   params: Promise<{ assetId: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; moved?: string; moveError?: string }>;
 }) {
   const { assetId } = await params;
   const pageParams = await searchParams;
@@ -220,58 +221,41 @@ export default async function AssetDetailPage({
         <Panel title={data.dictionary.assets.moveTitle}>
           <div className="stack">
             <p className="muted">{data.dictionary.assets.moveHelp}</p>
-            <form action={moveAssetAction} className="form-grid">
-              <input type="hidden" name="assetId" value={data.asset.id} />
-
-              <AssetLocationField
-                inputId="locationId"
-                inputName="locationId"
-                label={data.dictionary.common.location}
-                defaultLocationId={data.asset.currentLocationId}
-                emptyLabel={data.dictionary.assets.currentLocationFallback}
-                options={locationOptions}
-                storageKey={`miniassets:asset-move-location:${data.asset.id}`}
-                labels={{
-                  placeholder: data.dictionary.assets.locationPickerPlaceholder,
-                  help: data.dictionary.assets.locationPickerHelp,
-                  matched: data.dictionary.assets.locationPickerMatched,
-                  unresolved: data.dictionary.assets.locationPickerUnresolved,
-                  advanced: data.dictionary.assets.locationPickerAdvanced,
-                  locationId: data.dictionary.assets.locationPickerLocationId,
-                }}
-              />
-
-              <div className="field-stack">
-                <label htmlFor="status">{data.dictionary.common.status}</label>
-                <select id="status" name="status" defaultValue={data.asset.status}>
-                  {Object.entries(assetStatusLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="confidence">{data.dictionary.common.confidence}</label>
-                <select id="confidence" name="confidence" defaultValue="VERIFIED">
-                  {Object.entries(placementConfidenceLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field-stack full-span">
-                <label htmlFor="note">{data.dictionary.common.notes}</label>
-                <textarea id="note" name="note" />
-              </div>
-
-              <div className="full-span">
-                <button type="submit">{data.dictionary.common.move}</button>
-              </div>
-            </form>
+            {pageParams.moved === "1" ? <p className="muted save-confirmation">{data.dictionary.assets.moveSaved}</p> : null}
+            {pageParams.moveError === "location" ? (
+              <p className="form-error">{data.dictionary.assets.moveLocationRequired}</p>
+            ) : null}
+            <AssetMoveForm
+              assetId={data.asset.id}
+              defaultLocationId={data.asset.currentLocationId}
+              defaultStatus={data.asset.status}
+              action={moveAssetAction}
+              label={data.dictionary.common.location}
+              emptyLabel={data.dictionary.assets.currentLocationFallback}
+              options={locationOptions}
+              storageKey={`miniassets:asset-move-location:${data.asset.id}`}
+              labels={{
+                placeholder: data.dictionary.assets.locationPickerPlaceholder,
+                help: data.dictionary.assets.locationPickerHelp,
+                matched: data.dictionary.assets.locationPickerMatched,
+                unresolved: data.dictionary.assets.locationPickerUnresolved,
+                advanced: data.dictionary.assets.locationPickerAdvanced,
+                locationId: data.dictionary.assets.locationPickerLocationId,
+                status: data.dictionary.common.status,
+                confidence: data.dictionary.common.confidence,
+                notes: data.dictionary.common.notes,
+                move: data.dictionary.common.move,
+                locationRequired: data.dictionary.assets.moveLocationRequired,
+              }}
+              statusOptions={Object.entries(assetStatusLabels).map(([key, value]) => ({
+                value: key,
+                label: value[data.locale === "ZH_CN" ? "zh" : "en"],
+              }))}
+              confidenceOptions={Object.entries(placementConfidenceLabels).map(([key, value]) => ({
+                value: key,
+                label: value[data.locale === "ZH_CN" ? "zh" : "en"],
+              }))}
+            />
           </div>
         </Panel>
       </div>

@@ -173,13 +173,23 @@ const updateAssetSchema = z
     path: ["nameEn"],
   });
 
-const moveAssetSchema = z.object({
-  assetId: z.string().min(1),
-  locationId: z.string().optional(),
-  status: z.enum(["ACTIVE", "MISSING", "ARCHIVED"]),
-  confidence: z.enum(["VERIFIED", "ASSUMED", "REPORTED"]),
-  note: z.string().trim().max(500).optional(),
-});
+const moveAssetSchema = z
+  .object({
+    assetId: z.string().min(1),
+    locationId: z.string().optional(),
+    status: z.enum(["ACTIVE", "MISSING", "ARCHIVED"]),
+    confidence: z.enum(["VERIFIED", "ASSUMED", "REPORTED"]),
+    note: z.string().trim().max(500).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.status !== "MISSING" && !value.locationId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "An exact location is required unless the asset is marked missing.",
+        path: ["locationId"],
+      });
+    }
+  });
 
 const deleteAssetSchema = z.object({
   assetId: z.string().min(1),
@@ -949,13 +959,22 @@ export async function updateAssetAction(formData: FormData) {
 
 export async function moveAssetAction(formData: FormData) {
   const user = await requireUser();
-  const parsed = moveAssetSchema.parse({
+  const rawAssetId = String(formData.get("assetId") || "").trim();
+  const parsedResult = moveAssetSchema.safeParse({
     assetId: formData.get("assetId"),
     locationId: formData.get("locationId") || undefined,
     status: formData.get("status"),
     confidence: formData.get("confidence"),
     note: formData.get("note") || undefined,
   });
+  if (!parsedResult.success) {
+    if (rawAssetId) {
+      redirect(`/assets/${rawAssetId}?moveError=location`);
+    }
+
+    throw new Error("Invalid move payload.");
+  }
+  const parsed = parsedResult.data;
 
   const asset = await prisma.asset.findUnique({
     where: { id: parsed.assetId },
@@ -988,7 +1007,7 @@ export async function moveAssetAction(formData: FormData) {
   });
 
   revalidateWorkspaceViews();
-  redirect(`/assets/${parsed.assetId}`);
+  redirect(`/assets/${parsed.assetId}?moved=1`);
 }
 
 export async function deleteAssetAction(formData: FormData) {
