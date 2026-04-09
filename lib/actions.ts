@@ -111,6 +111,7 @@ const createAssetSchema = z
     primaryColor: z.string().trim().max(80).optional(),
     secondaryColor: z.string().trim().max(80).optional(),
     brand: z.string().trim().max(80).optional(),
+    brandZh: z.string().trim().max(80).optional(),
     model: z.string().trim().max(80).optional(),
     variant: z.string().trim().max(80).optional(),
     variantZh: z.string().trim().max(80).optional(),
@@ -150,6 +151,7 @@ const updateAssetSchema = z
     primaryColor: z.string().trim().max(80).optional(),
     secondaryColor: z.string().trim().max(80).optional(),
     brand: z.string().trim().max(80).optional(),
+    brandZh: z.string().trim().max(80).optional(),
     model: z.string().trim().max(80).optional(),
     variant: z.string().trim().max(80).optional(),
     variantZh: z.string().trim().max(80).optional(),
@@ -793,6 +795,7 @@ export async function createAssetAction(formData: FormData) {
     primaryColor: formData.get("primaryColor") || undefined,
     secondaryColor: formData.get("secondaryColor") || undefined,
     brand: formData.get("brand") || undefined,
+    brandZh: formData.get("brandZh") || undefined,
     model: formData.get("model") || undefined,
     variant: formData.get("variant") || undefined,
     variantZh: formData.get("variantZh") || undefined,
@@ -825,13 +828,14 @@ export async function createAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const normalizedBrand = normalizeLocalizedPair(parsed.brand, parsed.brandZh);
   const size = normalizeSizeValue(parsed.size);
   const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
   const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
   const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
   const [assetCode, brand, model, variant, subvariant, barcodeSource] = await Promise.all([
     generateNextAssetCode(parsed.workspaceId),
-    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", normalizedBrand.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
     canonicalizeWorkspaceValue(parsed.workspaceId, "variant", normalizedVariant.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", normalizedSubvariant.nameEn),
@@ -850,6 +854,7 @@ export async function createAssetAction(formData: FormData) {
       primaryColor: primaryColor || null,
       secondaryColor: secondaryColor || null,
       brand: brand || null,
+      brandZh: normalizedBrand.nameZh || null,
       model: model || null,
       variant: variant || null,
       variantZh: normalizedVariant.nameZh || null,
@@ -901,6 +906,7 @@ export async function updateAssetAction(formData: FormData) {
     primaryColor: formData.get("primaryColor") || undefined,
     secondaryColor: formData.get("secondaryColor") || undefined,
     brand: formData.get("brand") || undefined,
+    brandZh: formData.get("brandZh") || undefined,
     model: formData.get("model") || undefined,
     variant: formData.get("variant") || undefined,
     variantZh: formData.get("variantZh") || undefined,
@@ -942,12 +948,13 @@ export async function updateAssetAction(formData: FormData) {
 
   const primaryColor = normalizeColorValue(parsed.primaryColor);
   const secondaryColor = normalizeColorValue(parsed.secondaryColor);
+  const normalizedBrand = normalizeLocalizedPair(parsed.brand, parsed.brandZh);
   const size = normalizeSizeValue(parsed.size);
   const normalizedNames = normalizeLocalizedPair(parsed.nameEn, parsed.nameZh);
   const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
   const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
   const [brand, model, variant, subvariant, barcodeSource] = await Promise.all([
-    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", parsed.brand),
+    canonicalizeWorkspaceValue(parsed.workspaceId, "brand", normalizedBrand.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
     canonicalizeWorkspaceValue(parsed.workspaceId, "variant", normalizedVariant.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "subvariant", normalizedSubvariant.nameEn),
@@ -964,6 +971,7 @@ export async function updateAssetAction(formData: FormData) {
       primaryColor: primaryColor || null,
       secondaryColor: secondaryColor || null,
       brand: brand || null,
+      brandZh: normalizedBrand.nameZh || null,
       model: model || null,
       variant: variant || null,
       variantZh: normalizedVariant.nameZh || null,
@@ -1107,6 +1115,7 @@ export async function duplicateAssetAction(formData: FormData) {
       primaryColor: asset.primaryColor,
       secondaryColor: asset.secondaryColor,
       brand: asset.brand,
+      brandZh: asset.brandZh,
       model: asset.model,
       variant: asset.variant,
       variantZh: asset.variantZh,

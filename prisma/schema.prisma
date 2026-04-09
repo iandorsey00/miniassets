@@ -192,6 +192,7 @@ model Asset {
   primaryColor      String?
   secondaryColor    String?
   brand             String?
+  brandZh           String?
   model             String?
   variant           String?
   variantZh         String?

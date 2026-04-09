@@ -114,39 +114,16 @@ export default async function NewAssetPage({
                 </select>
               </div>
 
-              <div className="field-stack">
-                <label htmlFor="brand">{data.dictionary.common.brand}</label>
-                <input id="brand" name="brand" list="brandSuggestions" />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="model">{data.dictionary.common.model}</label>
-                <input id="model" name="model" list="modelSuggestions" />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="size">{data.dictionary.common.size}</label>
-                <input id="size" name="size" list="sizeSuggestions" />
-              </div>
-
               <BilingualNameFields
                 locale={data.locale}
-                englishLabel={data.dictionary.common.variant}
-                chineseLabel={data.dictionary.common.variant}
-                englishId="variant"
-                chineseId="variantZh"
-                englishName="variant"
-                chineseName="variantZh"
-              />
-
-              <BilingualNameFields
-                locale={data.locale}
-                englishLabel={data.dictionary.common.subvariant}
-                chineseLabel={data.dictionary.common.subvariant}
-                englishId="subvariant"
-                chineseId="subvariantZh"
-                englishName="subvariant"
-                chineseName="subvariantZh"
+                englishLabel={data.dictionary.common.brand}
+                chineseLabel={data.dictionary.common.brand}
+                englishId="brand"
+                chineseId="brandZh"
+                englishName="brand"
+                chineseName="brandZh"
+                englishList="brandSuggestions"
+                chineseList="brandZhSuggestions"
               />
             </BilingualFieldsScope>
 
@@ -155,131 +132,169 @@ export default async function NewAssetPage({
               <input id="barcodeValue" name="barcodeValue" />
             </div>
 
-            <div className="field-stack">
-              <label htmlFor="barcodeFormat">{data.dictionary.common.barcodeFormat}</label>
-              <input id="barcodeFormat" name="barcodeFormat" />
-            </div>
+            <details className="asset-advanced full-span">
+              <summary>{data.dictionary.assets.advancedDetails}</summary>
+              <p className="muted asset-advanced-help">{data.dictionary.assets.advancedHelp}</p>
+              <div className="form-grid">
+                <div className="field-stack">
+                  <label htmlFor="model">{data.dictionary.common.model}</label>
+                  <input id="model" name="model" list="modelSuggestions" />
+                </div>
 
-            <div className="field-stack">
-              <label htmlFor="trackingMode">{data.dictionary.common.trackingMode}</label>
-              <select id="trackingMode" name="trackingMode" defaultValue="INDIVIDUAL">
-                {Object.entries(trackingModeLabels).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="field-stack">
+                  <label htmlFor="size">{data.dictionary.common.size}</label>
+                  <input id="size" name="size" list="sizeSuggestions" />
+                </div>
 
-            <div className="field-stack">
-              <label htmlFor="usageState">{data.dictionary.common.usageState}</label>
-              <select id="usageState" name="usageState" defaultValue="">
-                <option value="">{data.dictionary.common.optional}</option>
-                {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <BilingualFieldsScope locale={data.locale} label={data.dictionary.common.language}>
+                  <BilingualNameFields
+                    locale={data.locale}
+                    englishLabel={data.dictionary.common.variant}
+                    chineseLabel={data.dictionary.common.variant}
+                    englishId="variant"
+                    chineseId="variantZh"
+                    englishName="variant"
+                    chineseName="variantZh"
+                  />
 
-            <AssortedQuantityFields
-              assortedLabel={data.dictionary.common.assorted}
-              quantityLabel={data.dictionary.common.quantity}
-              estimatedQuantityLabel={data.dictionary.common.estimatedQuantity}
-              helpText={data.dictionary.assets.assortedHelp}
-              defaultQuantity={1}
-            />
+                  <BilingualNameFields
+                    locale={data.locale}
+                    englishLabel={data.dictionary.common.subvariant}
+                    chineseLabel={data.dictionary.common.subvariant}
+                    englishId="subvariant"
+                    chineseId="subvariantZh"
+                    englishName="subvariant"
+                    chineseName="subvariantZh"
+                  />
+                </BilingualFieldsScope>
 
-            <div className="field-stack">
-              <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>
-              <select id="sensitivityLevel" name="sensitivityLevel" defaultValue="LOW">
-                {Object.entries(sensitivityLabels).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="field-stack">
+                  <label htmlFor="barcodeFormat">{data.dictionary.common.barcodeFormat}</label>
+                  <input id="barcodeFormat" name="barcodeFormat" />
+                </div>
 
-            <div className="field-stack">
-              <label className="checkbox-row" htmlFor="isLowStock">
-                <input id="isLowStock" name="isLowStock" type="checkbox" value="true" />
-                <span>{data.dictionary.common.lowStock}</span>
-              </label>
-            </div>
+                <div className="field-stack">
+                  <label htmlFor="trackingMode">{data.dictionary.common.trackingMode}</label>
+                  <select id="trackingMode" name="trackingMode" defaultValue="INDIVIDUAL">
+                    {Object.entries(trackingModeLabels).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="field-stack">
-              <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
-              <input id="barcodeSource" name="barcodeSource" list="barcodeSourceSuggestions" defaultValue="manual-or-scan" />
-            </div>
+                <div className="field-stack">
+                  <label htmlFor="usageState">{data.dictionary.common.usageState}</label>
+                  <select id="usageState" name="usageState" defaultValue="">
+                    <option value="">{data.dictionary.common.optional}</option>
+                    {Object.entries(assetUsageStateLabels).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="measurement-pair full-span">
-              <div className="field-stack">
-                <label htmlFor="lengthValue">{data.dictionary.common.length}</label>
-                <input id="lengthValue" name="lengthValue" type="number" min="0" step="0.01" />
+                <AssortedQuantityFields
+                  assortedLabel={data.dictionary.common.assorted}
+                  quantityLabel={data.dictionary.common.quantity}
+                  estimatedQuantityLabel={data.dictionary.common.estimatedQuantity}
+                  helpText={data.dictionary.assets.assortedHelp}
+                  defaultQuantity={1}
+                />
+
+                <div className="field-stack">
+                  <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>
+                  <select id="sensitivityLevel" name="sensitivityLevel" defaultValue="LOW">
+                    {Object.entries(sensitivityLabels).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value[data.locale === "ZH_CN" ? "zh" : "en"]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field-stack">
+                  <label className="checkbox-row" htmlFor="isLowStock">
+                    <input id="isLowStock" name="isLowStock" type="checkbox" value="true" />
+                    <span>{data.dictionary.common.lowStock}</span>
+                  </label>
+                </div>
+
+                <div className="field-stack">
+                  <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
+                  <input id="barcodeSource" name="barcodeSource" list="barcodeSourceSuggestions" defaultValue="manual-or-scan" />
+                </div>
+
+                <div className="measurement-pair full-span">
+                  <div className="field-stack">
+                    <label htmlFor="lengthValue">{data.dictionary.common.length}</label>
+                    <input id="lengthValue" name="lengthValue" type="number" min="0" step="0.01" />
+                  </div>
+
+                  <div className="field-stack">
+                    <label htmlFor="lengthUnit">{data.dictionary.common.unit}</label>
+                    <select id="lengthUnit" name="lengthUnit" defaultValue="">
+                      <option value="">{data.dictionary.common.optional}</option>
+                      {lengthUnitValues.map((value) => (
+                        <option key={value} value={value}>
+                          {lengthUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="measurement-pair full-span">
+                  <div className="field-stack">
+                    <label htmlFor="capacityValue">{data.dictionary.common.capacity}</label>
+                    <input id="capacityValue" name="capacityValue" type="number" min="0" step="0.01" />
+                  </div>
+
+                  <div className="field-stack">
+                    <label htmlFor="capacityUnit">{data.dictionary.common.unit}</label>
+                    <select id="capacityUnit" name="capacityUnit" defaultValue="">
+                      <option value="">{data.dictionary.common.optional}</option>
+                      {capacityUnitValues.map((value) => (
+                        <option key={value} value={value}>
+                          {capacityUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="measurement-pair full-span">
+                  <div className="field-stack">
+                    <label htmlFor="netWeightValue">{data.dictionary.common.netWeight}</label>
+                    <input id="netWeightValue" name="netWeightValue" type="number" min="0" step="0.01" />
+                  </div>
+
+                  <div className="field-stack">
+                    <label htmlFor="netWeightUnit">{data.dictionary.common.unit}</label>
+                    <select id="netWeightUnit" name="netWeightUnit" defaultValue="">
+                      <option value="">{data.dictionary.common.optional}</option>
+                      {netWeightUnitValues.map((value) => (
+                        <option key={value} value={value}>
+                          {netWeightUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="field-stack full-span">
+                  <label htmlFor="description">{data.dictionary.common.description}</label>
+                  <textarea id="description" name="description" />
+                </div>
+
+                <div className="field-stack full-span">
+                  <label htmlFor="notes">{data.dictionary.common.notes}</label>
+                  <textarea id="notes" name="notes" />
+                </div>
               </div>
-
-              <div className="field-stack">
-                <label htmlFor="lengthUnit">{data.dictionary.common.unit}</label>
-                <select id="lengthUnit" name="lengthUnit" defaultValue="">
-                  <option value="">{data.dictionary.common.optional}</option>
-                  {lengthUnitValues.map((value) => (
-                    <option key={value} value={value}>
-                      {lengthUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="measurement-pair full-span">
-              <div className="field-stack">
-                <label htmlFor="capacityValue">{data.dictionary.common.capacity}</label>
-                <input id="capacityValue" name="capacityValue" type="number" min="0" step="0.01" />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="capacityUnit">{data.dictionary.common.unit}</label>
-                <select id="capacityUnit" name="capacityUnit" defaultValue="">
-                  <option value="">{data.dictionary.common.optional}</option>
-                  {capacityUnitValues.map((value) => (
-                    <option key={value} value={value}>
-                      {capacityUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="measurement-pair full-span">
-              <div className="field-stack">
-                <label htmlFor="netWeightValue">{data.dictionary.common.netWeight}</label>
-                <input id="netWeightValue" name="netWeightValue" type="number" min="0" step="0.01" />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="netWeightUnit">{data.dictionary.common.unit}</label>
-                <select id="netWeightUnit" name="netWeightUnit" defaultValue="">
-                  <option value="">{data.dictionary.common.optional}</option>
-                  {netWeightUnitValues.map((value) => (
-                    <option key={value} value={value}>
-                      {netWeightUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="field-stack full-span">
-              <label htmlFor="description">{data.dictionary.common.description}</label>
-              <textarea id="description" name="description" />
-            </div>
-
-            <div className="field-stack full-span">
-              <label htmlFor="notes">{data.dictionary.common.notes}</label>
-              <textarea id="notes" name="notes" />
-            </div>
+            </details>
 
             <div className="full-span">
               <button type="submit">{data.dictionary.common.create}</button>
@@ -289,6 +304,11 @@ export default async function NewAssetPage({
           <datalist id="brandSuggestions">
             {data.assetFieldSuggestions.brands.map((value) => (
               <option key={`brand-${value}`} value={value} />
+            ))}
+          </datalist>
+          <datalist id="brandZhSuggestions">
+            {data.assetFieldSuggestions.brandsZh.map((value) => (
+              <option key={`brand-zh-${value}`} value={value} />
             ))}
           </datalist>
           <datalist id="modelSuggestions">

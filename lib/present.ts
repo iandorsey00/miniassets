@@ -82,6 +82,7 @@ export function formatAssetLabel(
     primaryColor?: string | null;
     secondaryColor?: string | null;
     brand?: string | null;
+    brandZh?: string | null;
     model?: string | null;
     variant?: string | null;
     variantZh?: string | null;
@@ -100,6 +101,7 @@ export function formatAssetLabel(
 ) {
   const primaryColor = formatColorLabel(locale, values.primaryColor?.trim() || values.color?.trim() || "");
   const secondaryColor = formatColorLabel(locale, values.secondaryColor?.trim() || "");
+  const brand = locale === "ZH_CN" ? values.brandZh?.trim() || values.brand?.trim() || "" : values.brand?.trim() || values.brandZh?.trim() || "";
   const variant = locale === "ZH_CN" ? values.variantZh?.trim() || values.variant?.trim() || "" : values.variant?.trim() || values.variantZh?.trim() || "";
   const subvariant =
     locale === "ZH_CN"
@@ -112,7 +114,7 @@ export function formatAssetLabel(
     pickLocalizedText(locale, values),
     primaryColor,
     secondaryColor,
-    values.brand?.trim() || "",
+    brand,
     variant,
     subvariant,
     formatSizeLabel(locale, values.size),

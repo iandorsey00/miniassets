@@ -13,6 +13,8 @@ type BilingualNameFieldsProps = {
   chineseId?: string;
   englishName?: string;
   chineseName?: string;
+  englishList?: string;
+  chineseList?: string;
   englishDisabled?: boolean;
   chineseDisabled?: boolean;
 };
@@ -37,6 +39,8 @@ export function BilingualNameFields({
   chineseId = "nameZh",
   englishName = "nameEn",
   chineseName = "nameZh",
+  englishList,
+  chineseList,
   englishDisabled = false,
   chineseDisabled = false,
 }: BilingualNameFieldsProps) {
@@ -96,6 +100,7 @@ export function BilingualNameFields({
         <input
           id={englishId}
           name={englishName}
+          list={englishList}
           value={englishValue}
           onChange={(event) => setEnglishValue(event.target.value)}
           onBlur={(event) => maybeRehomeValue("EN", event.target.value)}
@@ -108,6 +113,7 @@ export function BilingualNameFields({
         <input
           id={chineseId}
           name={chineseName}
+          list={chineseList}
           value={chineseValue}
           onChange={(event) => setChineseValue(event.target.value)}
           onBlur={(event) => maybeRehomeValue("ZH_CN", event.target.value)}

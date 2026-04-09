@@ -170,6 +170,7 @@ async function getAssetFieldSuggestions(workspaceId: string) {
       primaryColor: true,
       secondaryColor: true,
       brand: true,
+      brandZh: true,
       model: true,
       variant: true,
       variantZh: true,
@@ -184,6 +185,7 @@ async function getAssetFieldSuggestions(workspaceId: string) {
     primaryColors: uniqueSorted(assets.flatMap((asset) => [asset.primaryColor, asset.color])),
     secondaryColors: uniqueSorted(assets.map((asset) => asset.secondaryColor)),
     brands: uniqueSorted(assets.map((asset) => asset.brand)),
+    brandsZh: uniqueSorted(assets.map((asset) => asset.brandZh)),
     models: uniqueSorted(assets.map((asset) => asset.model)),
     variants: uniqueSorted(assets.map((asset) => asset.variant)),
     subvariants: uniqueSorted(assets.map((asset) => asset.subvariant)),
@@ -201,6 +203,7 @@ function buildAssetSearchText(
     primaryColor: string | null;
     secondaryColor: string | null;
     brand: string | null;
+    brandZh: string | null;
     model: string | null;
     variant: string | null;
     variantZh: string | null;
@@ -224,6 +227,7 @@ function buildAssetSearchText(
     formatColorLabel("ZH_CN", asset.primaryColor ?? asset.color),
     formatColorLabel("EN", asset.secondaryColor),
     formatColorLabel("ZH_CN", asset.secondaryColor),
+    asset.brandZh,
     formatAssetLabel("EN", asset, { includeModel: true }),
     formatAssetLabel("ZH_CN", asset, { includeModel: true }),
     asset.variantZh,
@@ -395,6 +399,7 @@ export async function getLocationsData(workspaceId?: string) {
         primaryColors: [],
         secondaryColors: [],
         brands: [],
+        brandsZh: [],
         models: [],
         variants: [],
         subvariants: [],
@@ -536,6 +541,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
       primaryColor: asset.primaryColor ?? asset.color,
       secondaryColor: asset.secondaryColor,
       brand: asset.brand,
+      brandZh: asset.brandZh,
       model: asset.model,
       variant: asset.variant,
       variantZh: asset.variantZh,
