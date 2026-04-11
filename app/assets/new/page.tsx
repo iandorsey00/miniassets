@@ -14,6 +14,7 @@ export default async function NewAssetPage({
   const locationOptions = data.locations.map((location) => ({
     id: location.id,
     path: buildLocationPath(data.locations, location.id, data.locale) || location.code || location.id,
+    locationCode: location.locationCode,
     code: location.code,
     nameEn: location.nameEn,
     nameZh: location.nameZh,

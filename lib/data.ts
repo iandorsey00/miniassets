@@ -291,7 +291,13 @@ export function buildAssetSearchText(
     notes: string | null;
     currentLocationId?: string | null;
   },
-  locations: Array<{ id: string; parentId: string | null; nameEn: string | null; nameZh: string | null }>,
+  locations: Array<{
+    id: string;
+    parentId: string | null;
+    nameEn: string | null;
+    nameZh: string | null;
+    locationCode?: string | null;
+  }>,
 ) {
   return [
     asset.assetCode,
@@ -315,6 +321,7 @@ export function buildAssetSearchText(
     asset.notes,
     asset.currentLocationId ? buildLocationPath(locations, asset.currentLocationId, "EN") : "",
     asset.currentLocationId ? buildLocationPath(locations, asset.currentLocationId, "ZH_CN") : "",
+    asset.currentLocationId ? locations.find((location) => location.id === asset.currentLocationId)?.locationCode ?? "" : "",
   ]
     .filter(Boolean)
     .join(" | ")
@@ -505,6 +512,7 @@ export async function getLocationsData(workspaceId?: string) {
             referenceLocation: {
               select: {
                 id: true,
+                locationCode: true,
                 code: true,
                 nameEn: true,
                 nameZh: true,
@@ -583,6 +591,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
             referenceLocation: {
               select: {
                 id: true,
+                locationCode: true,
                 code: true,
                 nameEn: true,
                 nameZh: true,
@@ -644,6 +653,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
     exportedAt: new Date().toISOString(),
     workspace: {
       id: context.currentWorkspace.id,
+      workspaceCode: context.currentWorkspace.workspaceCode,
       slug: context.currentWorkspace.slug,
       name: context.currentWorkspace.name,
       description: context.currentWorkspace.description,
@@ -660,6 +670,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
         location.parentId && locations.length ? buildLocationPath(locations, location.parentId, "EN") : null,
       childIds: childrenByParent.get(location.id) ?? [],
       kind: location.kind,
+      locationCode: location.locationCode,
       code: location.code,
       nameEn: location.nameEn,
       nameZh: location.nameZh,
@@ -674,6 +685,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
         ordinal: descriptor.ordinal,
         qualifier: descriptor.qualifier,
         referenceLocationId: descriptor.referenceLocationId,
+        referenceLocationCode: descriptor.referenceLocation?.locationCode ?? null,
         referenceLocationPath:
           descriptor.referenceLocationId && locations.length
             ? buildLocationPath(locations, descriptor.referenceLocationId, "EN")
@@ -716,6 +728,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
       sensitivityLevel: asset.sensitivityLevel,
       status: asset.status,
       currentLocationId: asset.currentLocationId,
+      currentLocationCode: asset.currentLocation?.locationCode ?? null,
       currentLocationPath:
         asset.currentLocationId && locations.length
           ? buildLocationPath(locations, asset.currentLocationId, "EN")
@@ -725,6 +738,7 @@ export async function exportWorkspaceData(workspaceId?: string) {
       placements: asset.placements.map((placement) => ({
         movedAt: placement.movedAt.toISOString(),
         locationId: placement.locationId,
+        locationCode: placement.location?.locationCode ?? null,
         locationPath:
           placement.locationId && locations.length
             ? buildLocationPath(locations, placement.locationId, "EN")

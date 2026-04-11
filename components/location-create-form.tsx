@@ -19,6 +19,7 @@ import {
 type LocationOption = {
   id: string;
   kind: LocationKind;
+  locationCode?: string | null;
   label: string;
 };
 
@@ -37,9 +38,9 @@ type LocationCreateFormProps = {
     locations: {
       parent: string;
       type: string;
-      code: string;
       topLevel: string;
       numericCodeHint: string;
+      autoCodeHint: string;
       typeHelp: string;
       typeGroupStructure: string;
       typeGroupStorage: string;
@@ -85,6 +86,7 @@ export function LocationCreateForm({
       locations.map((location) => ({
         id: location.id,
         path: location.label,
+        locationCode: location.locationCode,
       })),
     [locations],
   );
@@ -148,17 +150,6 @@ export function LocationCreateForm({
             </select>
           </div>
 
-          <div className="field-stack">
-            <label htmlFor="code">{dictionary.locations.code}</label>
-            <input
-              id="code"
-              name="code"
-              inputMode={numericCode ? "numeric" : undefined}
-              pattern={numericCode ? "[0-9]*" : undefined}
-              placeholder={numericCode ? "1" : "R1-C2"}
-            />
-          </div>
-
           {showPositionPreset ? (
             <div className="field-stack">
               <label htmlFor="positionPreset">{dictionary.locations.positionPreset}</label>
@@ -180,7 +171,7 @@ export function LocationCreateForm({
 
         <div className="location-form-helper muted">
           <p>{dictionary.locations.typeHelp}</p>
-          {numericCode ? <p>{dictionary.locations.numericCodeHint}</p> : null}
+          {numericCode ? <p>{dictionary.locations.autoCodeHint}</p> : null}
           {showPositionPreset ? <p>{dictionary.locations.positionPresetHelp}</p> : null}
         </div>
       </div>

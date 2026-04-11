@@ -6,6 +6,7 @@ export type AssetLocationOption = {
   id: string;
   path: string;
   code?: string | null;
+  locationCode?: string | null;
   nameEn?: string | null;
   nameZh?: string | null;
 };
@@ -38,7 +39,7 @@ function matchesOption(option: AssetLocationOption, normalizedQuery: string) {
     return true;
   }
 
-  const haystacks = [option.path, option.code, option.nameEn, option.nameZh]
+  const haystacks = [option.path, option.locationCode, option.code, option.nameEn, option.nameZh]
     .filter(Boolean)
     .map((value) => normalizeLookupValue(String(value)));
 
@@ -62,11 +63,19 @@ export function AssetLocationField({
 
   const lookupMap = useMemo(() => {
     const paths = new Map<string, string>();
+    const locationCodes = new Map<string, string>();
     const codes = new Map<string, string>();
     const names = new Map<string, string>();
 
     for (const option of options) {
       paths.set(normalizeLookupValue(option.path), option.id);
+
+      if (option.locationCode) {
+        const normalizedLocationCode = normalizeLookupValue(option.locationCode);
+        if (!locationCodes.has(normalizedLocationCode)) {
+          locationCodes.set(normalizedLocationCode, option.id);
+        }
+      }
 
       if (option.code) {
         const normalizedCode = normalizeLookupValue(option.code);
@@ -84,7 +93,7 @@ export function AssetLocationField({
       }
     }
 
-    return { paths, codes, names };
+    return { paths, locationCodes, codes, names };
   }, [options]);
 
   const [query, setQuery] = useState(() => {
@@ -160,6 +169,7 @@ export function AssetLocationField({
     return (
       optionById.get(rawValue)?.id ??
       lookupMap.paths.get(normalized) ??
+      lookupMap.locationCodes.get(normalized) ??
       lookupMap.codes.get(normalized) ??
       lookupMap.names.get(normalized) ??
       ""
@@ -236,7 +246,11 @@ export function AssetLocationField({
               onClick={() => selectOption(option)}
             >
               <span className="location-picker-option-path">{option.path}</span>
-              {option.code ? <span className="location-picker-option-meta">{option.code}</span> : null}
+              {[option.locationCode, option.code].filter(Boolean).length ? (
+                <span className="location-picker-option-meta">
+                  {[option.locationCode, option.code].filter(Boolean).join(" · ")}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
@@ -253,7 +267,7 @@ export function AssetLocationField({
             >
               <span className="location-picker-option-path">{option.path}</span>
               <span className="location-picker-option-meta">
-                {[option.code, option.nameEn, option.nameZh].filter(Boolean).join(" · ")}
+                {[option.locationCode, option.code, option.nameEn, option.nameZh].filter(Boolean).join(" · ")}
               </span>
             </button>
           ))}

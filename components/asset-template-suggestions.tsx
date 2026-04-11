@@ -54,6 +54,14 @@ function normalizeText(value: string) {
   return value.trim().toLowerCase();
 }
 
+function significantCharCount(value: string) {
+  return Array.from(value).filter((char) => /[\p{L}\p{N}]/u.test(char)).length;
+}
+
+function hasStrongTextSignal(value: string) {
+  return significantCharCount(value) >= 2;
+}
+
 function setControlValue(id: string, value: string | number | null | undefined) {
   const element = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
   if (!element) {
@@ -88,7 +96,8 @@ function setCheckboxValue(id: string, checked: boolean) {
 function scoreTemplate(snapshot: FormSnapshot, template: AssetTemplate) {
   let score = 0;
   const barcode = normalizeText(snapshot.barcodeValue);
-  if (barcode && normalizeText(template.barcodeValue || "") === barcode) {
+  const barcodeExact = Boolean(barcode && normalizeText(template.barcodeValue || "") === barcode);
+  if (barcodeExact) {
     score += 120;
   }
 
@@ -103,7 +112,7 @@ function scoreTemplate(snapshot: FormSnapshot, template: AssetTemplate) {
   for (const [current, existing, weight] of textPairs) {
     const normalizedCurrent = normalizeText(current);
     const normalizedExisting = normalizeText(existing || "");
-    if (!normalizedCurrent || !normalizedExisting) {
+    if (!normalizedCurrent || !normalizedExisting || !hasStrongTextSignal(normalizedCurrent)) {
       continue;
     }
 
@@ -186,9 +195,16 @@ export function AssetTemplateSuggestions({
       return [];
     }
 
+    const hasStrongSignal =
+      significantCharCount(snapshot.barcodeValue) >= 4 ||
+      [snapshot.nameEn, snapshot.nameZh, snapshot.brand, snapshot.brandZh, snapshot.model].some(hasStrongTextSignal);
+    if (!hasStrongSignal) {
+      return [];
+    }
+
     return templates
       .map((template) => ({ template, score: scoreTemplate(snapshot, template) }))
-      .filter((item) => item.score > 0)
+      .filter((item) => item.score >= 24)
       .sort((left, right) => right.score - left.score || left.template.assetCode.localeCompare(right.template.assetCode))
       .slice(0, 5);
   }, [snapshot, templates]);

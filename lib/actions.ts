@@ -19,6 +19,7 @@ import {
 } from "@/lib/constants";
 import { buildAssetSearchText, collectLocationDescendantIds, getViewerContext } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
+import { generateNextAssetCode, generateNextLocationCode } from "@/lib/system-codes";
 
 function optionalPositiveNumber(max: number) {
   return z.preprocess(
@@ -259,13 +260,50 @@ function validateLocationKindAndCode(
 
   const normalizedCode = normalizeLocationCode(code);
   if (isNumericCodeLocationKind(kind)) {
-    if (!normalizedCode) {
-      throw new Error("Cabinet, drawer, row, and column entries require a numeric code.");
-    }
-    if (!/^\d+$/.test(normalizedCode)) {
+    if (normalizedCode && !/^\d+$/.test(normalizedCode)) {
       throw new Error("Cabinet, drawer, row, and column codes must be numeric.");
     }
   }
+}
+
+async function generateStructuralLocationCode(args: {
+  workspaceId: string;
+  parentId: string | null;
+  kind: (typeof locationNodeTypeValues)[number];
+  existingLocationId?: string;
+  preferredCode?: string | null;
+}) {
+  if (!isNumericCodeLocationKind(args.kind)) {
+    return null;
+  }
+
+  const normalizedPreferredCode = normalizeLocationCode(args.preferredCode || undefined);
+  const siblings = await prisma.locationNode.findMany({
+    where: {
+      workspaceId: args.workspaceId,
+      parentId: args.parentId,
+      kind: args.kind,
+      id: args.existingLocationId ? { not: args.existingLocationId } : undefined,
+    },
+    select: { code: true },
+  });
+
+  const usedCodes = new Set(
+    siblings
+      .map((location) => normalizeLocationCode(location.code || undefined))
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  if (normalizedPreferredCode && /^\d+$/.test(normalizedPreferredCode) && !usedCodes.has(normalizedPreferredCode)) {
+    return normalizedPreferredCode;
+  }
+
+  const highestCode = Array.from(usedCodes).reduce((highest, code) => {
+    const parsed = Number.parseInt(code, 10);
+    return Number.isFinite(parsed) ? Math.max(highest, parsed) : highest;
+  }, 0);
+
+  return String(highestCode + 1);
 }
 
 function collapseWhitespace(value: string | undefined) {
@@ -303,25 +341,6 @@ function normalizeLocalizedPair(nameEn: string | undefined, nameZh: string | und
     nameEn: normalizedEn,
     nameZh: normalizedZh,
   };
-}
-
-async function generateNextAssetCode(workspaceId: string) {
-  const existingCodes = await prisma.asset.findMany({
-    where: { workspaceId },
-    select: { assetCode: true },
-  });
-
-  const highestNumber = existingCodes.reduce((highest, asset) => {
-    const match = asset.assetCode.match(/^AST-(\d+)$/i);
-    if (!match) {
-      return highest;
-    }
-
-    const parsed = Number.parseInt(match[1] ?? "", 10);
-    return Number.isFinite(parsed) ? Math.max(highest, parsed) : highest;
-  }, 0);
-
-  return `AST-${String(highestNumber + 1).padStart(5, "0")}`;
 }
 
 function toTitleCase(value: string) {
@@ -463,13 +482,20 @@ export async function createLocationAction(formData: FormData) {
 
   validateLocationKindAndCode(parent?.kind ?? null, parsed.kind, parsed.code);
   const resolvedNames = applyPositionPreset(context.locale, parsed.kind, parsed.positionPreset, parsed.nameEn, parsed.nameZh);
+  const structuralCode = await generateStructuralLocationCode({
+    workspaceId: parsed.workspaceId,
+    parentId: parsed.parentId || null,
+    kind: parsed.kind,
+    preferredCode: parsed.code,
+  });
 
   await prisma.locationNode.create({
     data: {
       workspaceId: parsed.workspaceId,
       parentId: parsed.parentId || null,
       kind: parsed.kind,
-      code: parsed.code || null,
+      locationCode: await generateNextLocationCode(prisma, parsed.workspaceId),
+      code: structuralCode,
       nameEn: resolvedNames.nameEn,
       nameZh: resolvedNames.nameZh,
       notes: parsed.notes || null,
@@ -534,10 +560,19 @@ export async function moveLocationAction(formData: FormData) {
     throw new Error("That location type is not allowed under the selected parent.");
   }
 
+  const nextStructuralCode = await generateStructuralLocationCode({
+    workspaceId: parsed.workspaceId,
+    parentId: nextParentId,
+    kind: location.kind,
+    existingLocationId: parsed.locationId,
+    preferredCode: null,
+  });
+
   await prisma.locationNode.update({
     where: { id: parsed.locationId },
     data: {
       parentId: nextParentId,
+      code: nextStructuralCode,
     },
   });
 
@@ -580,6 +615,13 @@ export async function updateLocationAction(formData: FormData) {
 
   validateLocationKindAndCode(existingLocation.parent?.kind ?? null, parsed.kind, parsed.code);
   const resolvedNames = applyPositionPreset(context.locale, parsed.kind, parsed.positionPreset, parsed.nameEn, parsed.nameZh);
+  const structuralCode = await generateStructuralLocationCode({
+    workspaceId: parsed.workspaceId,
+    parentId: existingLocation.parentId,
+    kind: parsed.kind,
+    existingLocationId: parsed.locationId,
+    preferredCode: existingLocation.code,
+  });
 
   const allowedChildKinds = getAllowedLocationKinds(parsed.kind);
   const invalidChild = existingLocation.children.find((child) => !allowedChildKinds.includes(child.kind));
@@ -591,7 +633,7 @@ export async function updateLocationAction(formData: FormData) {
     where: { id: parsed.locationId },
     data: {
       kind: parsed.kind,
-      code: parsed.code || null,
+      code: structuralCode,
       nameEn: resolvedNames.nameEn,
       nameZh: resolvedNames.nameZh,
       notes: parsed.notes || null,
@@ -825,7 +867,7 @@ export async function createAssetAction(formData: FormData) {
   const normalizedVariant = normalizeLocalizedPair(parsed.variant, parsed.variantZh);
   const normalizedSubvariant = normalizeLocalizedPair(parsed.subvariant, parsed.subvariantZh);
   const [assetCode, brand, model, variant, subvariant, barcodeSource] = await Promise.all([
-    generateNextAssetCode(parsed.workspaceId),
+    generateNextAssetCode(prisma, parsed.workspaceId),
     canonicalizeWorkspaceValue(parsed.workspaceId, "brand", normalizedBrand.nameEn),
     canonicalizeWorkspaceValue(parsed.workspaceId, "model", parsed.model),
     canonicalizeWorkspaceValue(parsed.workspaceId, "variant", normalizedVariant.nameEn),
@@ -1093,7 +1135,7 @@ export async function duplicateAssetAction(formData: FormData) {
     throw new Error("Workspace access denied.");
   }
 
-  const nextAssetCode = await generateNextAssetCode(asset.workspaceId);
+  const nextAssetCode = await generateNextAssetCode(prisma, asset.workspaceId);
   const duplicatedAsset = await prisma.asset.create({
     data: {
       workspaceId: asset.workspaceId,

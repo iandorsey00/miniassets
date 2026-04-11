@@ -5,6 +5,7 @@ echo "Applying Prisma schema..."
 
 if npx prisma db push; then
   npx prisma generate
+  node --experimental-strip-types scripts/backfill-system-codes.ts
   exit 0
 fi
 
@@ -20,3 +21,4 @@ fi
 mkdir -p "$(dirname "$SQLITE_PATH")"
 npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script | sqlite3 "$SQLITE_PATH"
 npx prisma generate
+node --experimental-strip-types scripts/backfill-system-codes.ts

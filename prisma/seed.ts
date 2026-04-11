@@ -21,6 +21,7 @@ async function main() {
   const workspace = await prisma.workspace.create({
     data: {
       slug: "home",
+      workspaceCode: "HO",
       name: "Home",
       description: "Local development workspace",
       memberships: {
@@ -35,6 +36,7 @@ async function main() {
   const house = await prisma.locationNode.create({
     data: {
       workspaceId: workspace.id,
+      locationCode: "MAHOLC000001",
       kind: "HOUSE",
       nameEn: "House",
       nameZh: "房屋",
@@ -46,6 +48,7 @@ async function main() {
     data: {
       workspaceId: workspace.id,
       parentId: house.id,
+      locationCode: "MAHOLC000002",
       kind: "ROOM",
       nameEn: "Bedroom",
       nameZh: "卧室",
@@ -57,6 +60,7 @@ async function main() {
     data: {
       workspaceId: workspace.id,
       parentId: bedroom.id,
+      locationCode: "MAHOLC000003",
       kind: "AREA",
       nameEn: "Temporary Squares",
       nameZh: "临时方格",
@@ -69,7 +73,7 @@ async function main() {
       workspaceId: workspace.id,
       createdByUserId: admin.id,
       currentLocationId: area.id,
-      assetCode: "AST-0001",
+      assetCode: "MAHOAS000001",
       nameEn: "Charging cables",
       nameZh: "充电线",
       quantity: 5,

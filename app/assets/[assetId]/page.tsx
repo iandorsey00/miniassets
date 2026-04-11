@@ -45,6 +45,7 @@ export default async function AssetDetailPage({
   const locationOptions = data.locations.map((location) => ({
     id: location.id,
     path: buildLocationPath(data.locations, location.id, data.locale) || location.code || location.id,
+    locationCode: location.locationCode,
     code: location.code,
     nameEn: location.nameEn,
     nameZh: location.nameZh,
@@ -55,6 +56,7 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.englishName}: ${data.asset.nameEn || "-"}`,
     `${data.dictionary.common.chineseName}: ${data.asset.nameZh || "-"}`,
     `${data.dictionary.common.location}: ${shareLocationPath}`,
+    `${data.dictionary.common.locationCode}: ${data.asset.currentLocation?.locationCode || "-"}`,
     `${data.dictionary.common.trackingMode}: ${trackingModeLabels[data.asset.trackingMode][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.usageState}: ${data.asset.usageState ? assetUsageStateLabels[data.asset.usageState][data.locale === "ZH_CN" ? "zh" : "en"] : "-"}`,
     `${data.dictionary.common.lowStock}: ${data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}`,
@@ -113,6 +115,10 @@ export default async function AssetDetailPage({
             <div className="split-line">
               <span>{data.dictionary.common.itemCode}</span>
               <strong>{data.asset.assetCode}</strong>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.locationCode}</span>
+              <span>{data.asset.currentLocation?.locationCode || "-"}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.sensitivity}</span>

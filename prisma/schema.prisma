@@ -116,6 +116,7 @@ model Workspace {
   id              String                @id @default(cuid())
   authWorkspaceId String?               @unique
   slug            String                @unique
+  workspaceCode   String?               @unique
   name            String
   description     String?
   isArchived      Boolean               @default(false)
@@ -143,6 +144,7 @@ model LocationNode {
   workspaceId        String
   parentId           String?
   kind               LocationNodeType
+  locationCode       String?
   code               String?
   nameEn             String?
   nameZh             String?
@@ -159,6 +161,7 @@ model LocationNode {
   referencedByZones  LocationDescriptor[] @relation("ReferencedLocationDescriptors")
 
   @@index([workspaceId, parentId, sortOrder])
+  @@unique([workspaceId, locationCode])
 }
 
 model LocationDescriptor {

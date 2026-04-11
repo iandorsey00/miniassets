@@ -128,6 +128,7 @@ function renderTree(
                   <div className="tree-path">
                     {locationKindLabels[location.kind][data.locale === "ZH_CN" ? "zh" : "en"]}
                   </div>
+                  {location.locationCode ? <div className="asset-code">{location.locationCode}</div> : null}
                 </div>
                 <div className="row-meta">{data.assetCounts.get(location.id) ?? 0}</div>
               </div>
@@ -159,6 +160,11 @@ function renderTree(
                   <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
                   <input type="hidden" name="locationId" value={location.id} />
 
+                  <div className="field-stack full-span">
+                    <label htmlFor={`locationCode-${location.id}`}>{data.dictionary.common.locationCode}</label>
+                    <input id={`locationCode-${location.id}`} value={location.locationCode ?? ""} readOnly />
+                  </div>
+
                   <div className="field-stack">
                     <label htmlFor={`kind-${location.id}`}>{data.dictionary.locations.type}</label>
                     <select id={`kind-${location.id}`} name="kind" defaultValue={location.kind}>
@@ -174,12 +180,12 @@ function renderTree(
                     <label htmlFor={`code-${location.id}`}>{data.dictionary.locations.code}</label>
                     <input
                       id={`code-${location.id}`}
-                      name="code"
                       defaultValue={location.code ?? ""}
+                      readOnly
                       inputMode={numericCode ? "numeric" : undefined}
                       pattern={numericCode ? "[0-9]*" : undefined}
                     />
-                    {numericCode ? <p className="muted">{data.dictionary.locations.numericCodeHint}</p> : null}
+                    {numericCode ? <p className="muted">{data.dictionary.locations.autoCodeHint}</p> : null}
                   </div>
 
                   <BilingualNameFields
@@ -297,6 +303,7 @@ export default async function LocationsPage({
   const locationOptions = data.locations.map((location) => ({
     id: location.id,
     kind: location.kind,
+    locationCode: location.locationCode,
     label:
       buildLocationPath(data.locations, location.id, data.locale) ||
       pickLocalizedText(data.locale, location) ||
@@ -327,9 +334,9 @@ export default async function LocationsPage({
               locations: {
                 parent: data.dictionary.locations.parent,
                 type: data.dictionary.locations.type,
-                code: data.dictionary.locations.code,
                 topLevel: data.dictionary.locations.topLevel,
                 numericCodeHint: data.dictionary.locations.numericCodeHint,
+                autoCodeHint: data.dictionary.locations.autoCodeHint,
                 typeHelp: data.dictionary.locations.typeHelp,
                 typeGroupStructure: data.dictionary.locations.typeGroupStructure,
                 typeGroupStorage: data.dictionary.locations.typeGroupStorage,
@@ -355,6 +362,7 @@ export default async function LocationsPage({
             options={locationOptions.map((location) => ({
               id: location.id,
               path: location.label,
+              locationCode: location.locationCode,
             }))}
             labels={{
               location: data.dictionary.common.location,
@@ -374,7 +382,7 @@ export default async function LocationsPage({
         <div className="full-span">
           <Panel title={data.dictionary.locations.title}>
             <p className="muted">{data.dictionary.locations.standardHint}</p>
-            <p className="muted">{data.dictionary.locations.numericCodeHint}</p>
+            <p className="muted">{data.dictionary.locations.autoCodeHint}</p>
             {renderTree(null, data)}
           </Panel>
         </div>
