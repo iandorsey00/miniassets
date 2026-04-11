@@ -1,25 +1,16 @@
-import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField } from "@/components/asset-location-field";
+import { AssetEditForm } from "@/components/asset-edit-form";
 import { AssetMoveForm } from "@/components/asset-move-form";
-import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
 import { AssetShareActions } from "@/components/asset-share-actions";
-import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
-import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { Badge, EmptyState, PageHeader, Panel, StatusNotice } from "@/components/ui";
 import { deleteAssetAction, duplicateAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
   assetStatusLabels,
   assetUsageStateLabels,
   capacityUnitLabels,
-  capacityUnitValues,
-  commonColorValues,
-  commonColorLabels,
-  commonSizeLabels,
-  commonSizeValues,
   lengthUnitLabels,
   lengthUnitValues,
   netWeightUnitLabels,
-  netWeightUnitValues,
   placementConfidenceLabels,
   sensitivityLabels,
   trackingModeLabels,
@@ -283,322 +274,17 @@ export default async function AssetDetailPage({
       </div>
 
       <Panel title={data.dictionary.assets.editTitle}>
-        <form action={updateAssetAction} className="form-grid">
-          <input type="hidden" name="assetId" value={data.asset.id} />
-          <input type="hidden" name="workspaceId" value={data.asset.workspaceId} />
-
-          <div className="stack full-span scanner-inline-block">
-            <p className="muted">{data.dictionary.assets.scannerHelp}</p>
-            <BarcodeScanner
-              targetInputId="barcodeValue"
-              lookupEndpoint="/api/barcodes/lookup"
-              labels={{
-                start: data.dictionary.assets.scannerStart,
-                stop: data.dictionary.assets.scannerStop,
-                unavailable: data.dictionary.assets.scannerUnavailable,
-                cameraFailed: data.dictionary.assets.scannerCameraFailed,
-                lookupSuccess: data.dictionary.assets.scannerLookupSuccess,
-                lookupMissing: data.dictionary.assets.scannerLookupMissing,
-                lookupFailed: data.dictionary.assets.scannerLookupFailed,
-              }}
-            />
-            <p className="muted">{data.dictionary.assets.lookupHelp}</p>
-          </div>
-
-          <AssetLocationField
-            inputId="currentLocationId"
-            inputName="currentLocationId"
-            label={data.dictionary.common.location}
-            defaultLocationId={data.asset.currentLocationId}
-            emptyLabel={data.dictionary.assets.currentLocationFallback}
-            options={locationOptions}
-            storageKey={`miniassets:asset-edit-location:${data.asset.id}`}
-            labels={{
-              placeholder: data.dictionary.assets.locationPickerPlaceholder,
-              help: data.dictionary.assets.locationPickerHelp,
-              matched: data.dictionary.assets.locationPickerMatched,
-              unresolved: data.dictionary.assets.locationPickerUnresolved,
-              advanced: data.dictionary.assets.locationPickerAdvanced,
-              locationId: data.dictionary.assets.locationPickerLocationId,
-            }}
-          />
-
-          <BilingualFieldsScope locale={data.locale} label={data.dictionary.common.language}>
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.englishName}
-              chineseLabel={data.dictionary.common.chineseName}
-              defaultEnglishValue={data.asset.nameEn ?? ""}
-              defaultChineseValue={data.asset.nameZh ?? ""}
-            />
-
-            <div className="field-stack">
-              <label htmlFor="primaryColor">{data.dictionary.common.primaryColor}</label>
-              <select
-                id="primaryColor"
-                name="primaryColor"
-                defaultValue={data.asset.primaryColor ?? data.asset.color ?? ""}
-              >
-                <option value="">{data.dictionary.common.optional}</option>
-                {!commonColorValues.includes((data.asset.primaryColor ?? data.asset.color ?? "") as (typeof commonColorValues)[number]) &&
-                (data.asset.primaryColor ?? data.asset.color) ? (
-                  <option value={data.asset.primaryColor ?? data.asset.color ?? ""}>
-                    {data.asset.primaryColor ?? data.asset.color}
-                  </option>
-                ) : null}
-                {commonColorValues.map((value) => (
-                  <option key={`primary-${value}`} value={value}>
-                    {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="secondaryColor">{data.dictionary.common.secondaryColor}</label>
-              <select
-                id="secondaryColor"
-                name="secondaryColor"
-                defaultValue={data.asset.secondaryColor ?? ""}
-              >
-                <option value="">{data.dictionary.common.optional}</option>
-                {!commonColorValues.includes((data.asset.secondaryColor ?? "") as (typeof commonColorValues)[number]) &&
-                data.asset.secondaryColor ? (
-                  <option value={data.asset.secondaryColor}>{data.asset.secondaryColor}</option>
-                ) : null}
-                {commonColorValues.map((value) => (
-                  <option key={`secondary-${value}`} value={value}>
-                    {commonColorLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <BilingualNameFields
-              locale={data.locale}
-              englishLabel={data.dictionary.common.brand}
-              chineseLabel={data.dictionary.common.brand}
-              englishId="brand"
-              chineseId="brandZh"
-              englishName="brand"
-              chineseName="brandZh"
-              defaultEnglishValue={data.asset.brand ?? ""}
-              defaultChineseValue={data.asset.brandZh ?? ""}
-              englishList="brandSuggestions"
-              chineseList="brandZhSuggestions"
-            />
-          </BilingualFieldsScope>
-
-          <div className="field-stack">
-            <label htmlFor="barcodeValue">{data.dictionary.common.barcode}</label>
-            <input id="barcodeValue" name="barcodeValue" defaultValue={data.asset.barcodeValue ?? ""} />
-          </div>
-
-          <details className="asset-advanced full-span">
-            <summary>{data.dictionary.assets.advancedDetails}</summary>
-            <p className="muted asset-advanced-help">{data.dictionary.assets.advancedHelp}</p>
-            <div className="form-grid">
-              <div className="field-stack">
-                <label htmlFor="model">{data.dictionary.common.model}</label>
-                <input id="model" name="model" list="modelSuggestions" defaultValue={data.asset.model ?? ""} />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="size">{data.dictionary.common.size}</label>
-                <input id="size" name="size" list="sizeSuggestions" defaultValue={data.asset.size ?? ""} />
-              </div>
-
-              <BilingualFieldsScope locale={data.locale} label={data.dictionary.common.language}>
-                <BilingualNameFields
-                  locale={data.locale}
-                  englishLabel={data.dictionary.common.variant}
-                  chineseLabel={data.dictionary.common.variant}
-                  englishId="variant"
-                  chineseId="variantZh"
-                  englishName="variant"
-                  chineseName="variantZh"
-                  defaultEnglishValue={data.asset.variant ?? ""}
-                  defaultChineseValue={data.asset.variantZh ?? ""}
-                />
-
-                <BilingualNameFields
-                  locale={data.locale}
-                  englishLabel={data.dictionary.common.subvariant}
-                  chineseLabel={data.dictionary.common.subvariant}
-                  englishId="subvariant"
-                  chineseId="subvariantZh"
-                  englishName="subvariant"
-                  chineseName="subvariantZh"
-                  defaultEnglishValue={data.asset.subvariant ?? ""}
-                  defaultChineseValue={data.asset.subvariantZh ?? ""}
-                />
-              </BilingualFieldsScope>
-
-              <div className="field-stack">
-                <label htmlFor="barcodeFormat">{data.dictionary.common.barcodeFormat}</label>
-                <input id="barcodeFormat" name="barcodeFormat" defaultValue={data.asset.barcodeFormat ?? ""} />
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="barcodeSource">{data.dictionary.common.barcodeSource}</label>
-                <input
-                  id="barcodeSource"
-                  name="barcodeSource"
-                  list="barcodeSourceSuggestions"
-                  defaultValue={data.asset.barcodeSource ?? ""}
-                />
-              </div>
-
-              <div className="measurement-pair full-span">
-                <div className="field-stack">
-                  <label htmlFor="lengthValue">{data.dictionary.common.length}</label>
-                  <input
-                    id="lengthValue"
-                    name="lengthValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={data.asset.lengthValue ?? ""}
-                  />
-                </div>
-
-                <div className="field-stack">
-                  <label htmlFor="lengthUnit">{data.dictionary.common.unit}</label>
-                  <select id="lengthUnit" name="lengthUnit" defaultValue={data.asset.lengthUnit ?? ""}>
-                    <option value="">{data.dictionary.common.optional}</option>
-                    {lengthUnitValues.map((value) => (
-                      <option key={value} value={value}>
-                        {lengthUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="measurement-pair full-span">
-                <div className="field-stack">
-                  <label htmlFor="capacityValue">{data.dictionary.common.capacity}</label>
-                  <input
-                    id="capacityValue"
-                    name="capacityValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={data.asset.capacityValue ?? ""}
-                  />
-                </div>
-
-                <div className="field-stack">
-                  <label htmlFor="capacityUnit">{data.dictionary.common.unit}</label>
-                  <select id="capacityUnit" name="capacityUnit" defaultValue={data.asset.capacityUnit ?? ""}>
-                    <option value="">{data.dictionary.common.optional}</option>
-                    {capacityUnitValues.map((value) => (
-                      <option key={value} value={value}>
-                        {capacityUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="measurement-pair full-span">
-                <div className="field-stack">
-                  <label htmlFor="netWeightValue">{data.dictionary.common.netWeight}</label>
-                  <input
-                    id="netWeightValue"
-                    name="netWeightValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={data.asset.netWeightValue ?? ""}
-                  />
-                </div>
-
-                <div className="field-stack">
-                  <label htmlFor="netWeightUnit">{data.dictionary.common.unit}</label>
-                  <select id="netWeightUnit" name="netWeightUnit" defaultValue={data.asset.netWeightUnit ?? ""}>
-                    <option value="">{data.dictionary.common.optional}</option>
-                    {netWeightUnitValues.map((value) => (
-                      <option key={value} value={value}>
-                        {netWeightUnitLabels[value][data.locale === "ZH_CN" ? "zh" : "en"]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="trackingMode">{data.dictionary.common.trackingMode}</label>
-                <select id="trackingMode" name="trackingMode" defaultValue={data.asset.trackingMode}>
-                  {Object.entries(trackingModeLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field-stack">
-                <label htmlFor="usageState">{data.dictionary.common.usageState}</label>
-                <select id="usageState" name="usageState" defaultValue={data.asset.usageState ?? ""}>
-                  <option value="">{data.dictionary.common.optional}</option>
-                  {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <AssortedQuantityFields
-                assortedLabel={data.dictionary.common.assorted}
-                quantityLabel={data.dictionary.common.quantity}
-                estimatedQuantityLabel={data.dictionary.common.estimatedQuantity}
-                helpText={data.dictionary.assets.assortedHelp}
-                defaultAssorted={data.asset.isAssorted}
-                defaultQuantity={data.asset.quantity}
-              />
-
-              <div className="field-stack">
-                <label htmlFor="sensitivityLevel">{data.dictionary.common.sensitivity}</label>
-                <select id="sensitivityLevel" name="sensitivityLevel" defaultValue={data.asset.sensitivityLevel}>
-                  {Object.entries(sensitivityLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[data.locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field-stack">
-                <label className="checkbox-row" htmlFor="isLowStock">
-                  <input
-                    id="isLowStock"
-                    name="isLowStock"
-                    type="checkbox"
-                    value="true"
-                    defaultChecked={data.asset.isLowStock}
-                  />
-                  <span>{data.dictionary.common.lowStock}</span>
-                </label>
-              </div>
-
-              <div className="field-stack full-span">
-                <label htmlFor="description">{data.dictionary.common.description}</label>
-                <textarea id="description" name="description" defaultValue={data.asset.description ?? ""} />
-              </div>
-
-              <div className="field-stack full-span">
-                <label htmlFor="notes">{data.dictionary.common.notes}</label>
-                <textarea id="notes" name="notes" defaultValue={data.asset.notes ?? ""} />
-              </div>
-            </div>
-          </details>
-
-          <div className="full-span">
-            <button type="submit">{data.dictionary.common.save}</button>
-          </div>
-        </form>
+        <AssetEditForm
+          action={updateAssetAction}
+          asset={data.asset}
+          locale={data.locale}
+          dictionary={{
+            common: data.dictionary.common,
+            assets: data.dictionary.assets,
+          }}
+          locationOptions={locationOptions}
+          assetFieldSuggestions={suggestions}
+        />
         <div className="asset-utility-zone">
           <p className="muted">{data.dictionary.assets.duplicateAssetHelp}</p>
           <form action={duplicateAssetAction} className="asset-delete-form">
@@ -617,47 +303,6 @@ export default async function AssetDetailPage({
               </button>
             </form>
         </div>
-        <datalist id="brandSuggestions">
-          {suggestions.brands.map((value) => (
-            <option key={`brand-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="brandZhSuggestions">
-          {suggestions.brandsZh.map((value) => (
-            <option key={`brand-zh-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="modelSuggestions">
-          {suggestions.models.map((value) => (
-            <option key={`model-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="variantSuggestions">
-          {suggestions.variants.map((value) => (
-            <option key={`variant-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="sizeSuggestions">
-          {commonSizeValues.map((value) => (
-            <option
-              key={`size-${value}`}
-              value={value === "ONE_SIZE" ? commonSizeLabels[value][data.locale === "ZH_CN" ? "zh" : "en"] : value}
-            />
-          ))}
-          {suggestions.sizes.map((value) => (
-            <option key={`size-custom-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="subvariantSuggestions">
-          {suggestions.subvariants.map((value) => (
-            <option key={`subvariant-${value}`} value={value} />
-          ))}
-        </datalist>
-        <datalist id="barcodeSourceSuggestions">
-          {suggestions.barcodeSources.map((value) => (
-            <option key={`barcode-source-${value}`} value={value} />
-          ))}
-        </datalist>
       </Panel>
 
       <Panel title={data.dictionary.assets.movementTitle}>

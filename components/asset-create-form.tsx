@@ -73,6 +73,7 @@ export function AssetCreateForm({
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
   const showUsageStateInMain = view === "STANDARD";
+  const showQuantityInMain = view === "STANDARD";
   const showSizeInMain = view === "CLOTHES";
 
   return (
@@ -230,6 +231,16 @@ export function AssetCreateForm({
         </div>
       ) : null}
 
+      {showQuantityInMain ? (
+        <AssortedQuantityFields
+          assortedLabel={dictionary.common.assorted}
+          quantityLabel={dictionary.common.quantity}
+          estimatedQuantityLabel={dictionary.common.estimatedQuantity}
+          helpText={dictionary.assets.assortedHelp}
+          defaultQuantity={1}
+        />
+      ) : null}
+
       <details className="asset-advanced full-span">
         <summary>{dictionary.assets.advancedDetails}</summary>
         <p className="muted asset-advanced-help">{dictionary.assets.advancedHelp}</p>
@@ -371,13 +382,15 @@ export function AssetCreateForm({
             </div>
           ) : null}
 
-          <AssortedQuantityFields
-            assortedLabel={dictionary.common.assorted}
-            quantityLabel={dictionary.common.quantity}
-            estimatedQuantityLabel={dictionary.common.estimatedQuantity}
-            helpText={dictionary.assets.assortedHelp}
-            defaultQuantity={1}
-          />
+          {!showQuantityInMain ? (
+            <AssortedQuantityFields
+              assortedLabel={dictionary.common.assorted}
+              quantityLabel={dictionary.common.quantity}
+              estimatedQuantityLabel={dictionary.common.estimatedQuantity}
+              helpText={dictionary.assets.assortedHelp}
+              defaultQuantity={1}
+            />
+          ) : null}
 
           <div className="field-stack">
             <label htmlFor="sensitivityLevel">{dictionary.common.sensitivity}</label>
