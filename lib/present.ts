@@ -96,6 +96,7 @@ export function formatAssetLabel(
     netWeightValue?: number | null;
     netWeightUnit?: string | null;
     assetCode?: string | null;
+    isAssorted?: boolean | null;
   },
   options?: { includeModel?: boolean },
 ) {
@@ -110,7 +111,9 @@ export function formatAssetLabel(
   const length = formatMeasurement(locale, values.lengthValue, values.lengthUnit, lengthUnitLabels);
   const capacity = formatMeasurement(locale, values.capacityValue, values.capacityUnit, capacityUnitLabels);
   const netWeight = formatMeasurement(locale, values.netWeightValue, values.netWeightUnit, netWeightUnitLabels);
+  const assorted = values.isAssorted ? (locale === "ZH_CN" ? "混合项" : "Assorted") : "";
   const segments = [
+    assorted,
     pickLocalizedText(locale, values),
     primaryColor,
     secondaryColor,

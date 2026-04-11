@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { AssetLocationField, type AssetLocationOption } from "@/components/asset-location-field";
 import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
+import { AssetTemplateSuggestions } from "@/components/asset-template-suggestions";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import {
@@ -71,6 +72,38 @@ type EditableAsset = {
   notes: string | null;
 };
 
+type AssetTemplate = {
+  id: string;
+  assetCode: string;
+  nameEn: string | null;
+  nameZh: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  brand: string | null;
+  brandZh: string | null;
+  model: string | null;
+  variant: string | null;
+  variantZh: string | null;
+  subvariant: string | null;
+  subvariantZh: string | null;
+  size: string | null;
+  barcodeValue: string | null;
+  barcodeFormat: string | null;
+  barcodeSource: string | null;
+  lengthValue: number | null;
+  lengthUnit: string | null;
+  capacityValue: number | null;
+  capacityUnit: string | null;
+  netWeightValue: number | null;
+  netWeightUnit: string | null;
+  isAssorted: boolean;
+  trackingMode: "INDIVIDUAL" | "GROUP";
+  usageState: "STORAGE" | "IN_USE" | null;
+  quantity: number;
+  sensitivityLevel: "LOW" | "MEDIUM";
+  label: string;
+};
+
 export function AssetEditForm({
   action,
   asset,
@@ -78,6 +111,7 @@ export function AssetEditForm({
   dictionary,
   locationOptions,
   assetFieldSuggestions,
+  assetTemplates,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   asset: EditableAsset;
@@ -88,6 +122,7 @@ export function AssetEditForm({
   };
   locationOptions: AssetLocationOption[];
   assetFieldSuggestions: SuggestionData;
+  assetTemplates: AssetTemplate[];
 }) {
   const [view, setView] = useState<AssetCreateView>(() => {
     if (typeof window === "undefined") {
@@ -311,6 +346,17 @@ export function AssetEditForm({
             defaultQuantity={asset.quantity}
           />
         ) : null}
+
+        <AssetTemplateSuggestions
+          locale={locale}
+          templates={assetTemplates}
+          labels={{
+            title: dictionary.assets.templateSuggestionsTitle,
+            help: dictionary.assets.templateSuggestionsHelp,
+            apply: dictionary.assets.templateSuggestionsApply,
+            applied: dictionary.assets.templateSuggestionsApplied,
+          }}
+        />
 
         <details className="asset-advanced full-span">
           <summary>{dictionary.assets.advancedDetails}</summary>

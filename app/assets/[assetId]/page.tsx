@@ -284,6 +284,7 @@ export default async function AssetDetailPage({
           }}
           locationOptions={locationOptions}
           assetFieldSuggestions={suggestions}
+          assetTemplates={data.assetTemplates}
         />
         <div className="asset-utility-zone">
           <p className="muted">{data.dictionary.assets.duplicateAssetHelp}</p>

@@ -52,6 +52,7 @@ export default async function NewAssetPage({
             dictionary={data.dictionary}
             locationOptions={locationOptions}
             assetFieldSuggestions={data.assetFieldSuggestions}
+            assetTemplates={data.assetTemplates}
           />
         </Panel>
       </div>

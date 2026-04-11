@@ -216,6 +216,58 @@ async function getAssetFieldSuggestions(workspaceId: string) {
   };
 }
 
+async function getAssetTemplates(
+  workspaceId: string,
+  locale: "ZH_CN" | "EN",
+  excludeAssetId?: string,
+) {
+  const assets = await prisma.asset.findMany({
+    where: {
+      workspaceId,
+      id: excludeAssetId ? { not: excludeAssetId } : undefined,
+    },
+    select: {
+      id: true,
+      assetCode: true,
+      nameEn: true,
+      nameZh: true,
+      color: true,
+      primaryColor: true,
+      secondaryColor: true,
+      brand: true,
+      brandZh: true,
+      model: true,
+      variant: true,
+      variantZh: true,
+      subvariant: true,
+      subvariantZh: true,
+      size: true,
+      barcodeValue: true,
+      barcodeFormat: true,
+      barcodeSource: true,
+      lengthValue: true,
+      lengthUnit: true,
+      capacityValue: true,
+      capacityUnit: true,
+      netWeightValue: true,
+      netWeightUnit: true,
+      isAssorted: true,
+      trackingMode: true,
+      usageState: true,
+      quantity: true,
+      sensitivityLevel: true,
+      updatedAt: true,
+    },
+    orderBy: [{ updatedAt: "desc" }],
+    take: 200,
+  });
+
+  return assets.map((asset) => ({
+    ...asset,
+    label: formatAssetLabel(locale, asset, { includeModel: true }),
+  }));
+}
+
 export function buildAssetSearchText(
   asset: {
     assetCode: string;
@@ -397,19 +449,20 @@ export async function getAssetDetail(assetId: string) {
   });
 
   if (!asset) {
-    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null };
+    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null, assetTemplates: [] };
   }
 
   if (!context.accessibleWorkspaceIds.includes(asset.workspaceId)) {
-    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null };
+    return { ...context, asset: null, locations: [], locationPath: "", assetFieldSuggestions: null, assetTemplates: [] };
   }
 
-  const [locations, assetFieldSuggestions] = await Promise.all([
+  const [locations, assetFieldSuggestions, assetTemplates] = await Promise.all([
     prisma.locationNode.findMany({
       where: { workspaceId: asset.workspaceId },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
     getAssetFieldSuggestions(asset.workspaceId),
+    getAssetTemplates(asset.workspaceId, context.locale, asset.id),
   ]);
 
   const locationPath =
@@ -417,7 +470,7 @@ export async function getAssetDetail(assetId: string) {
       ? buildLocationPath(locations, asset.currentLocationId, context.locale)
       : "";
 
-  return { ...context, asset, locations, locationPath, assetFieldSuggestions };
+  return { ...context, asset, locations, locationPath, assetFieldSuggestions, assetTemplates };
 }
 
 export async function getLocationsData(workspaceId?: string) {
@@ -438,10 +491,11 @@ export async function getLocationsData(workspaceId?: string) {
         sizes: [],
         barcodeSources: [],
       },
+      assetTemplates: [],
     };
   }
 
-  const [locations, counts, assetFieldSuggestions] = await Promise.all([
+  const [locations, counts, assetFieldSuggestions, assetTemplates] = await Promise.all([
     prisma.locationNode.findMany({
       where: { workspaceId: context.currentWorkspace.id },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
@@ -471,12 +525,14 @@ export async function getLocationsData(workspaceId?: string) {
       _count: { _all: true },
     }),
     getAssetFieldSuggestions(context.currentWorkspace.id),
+    getAssetTemplates(context.currentWorkspace.id, context.locale),
   ]);
 
   return {
     ...context,
     locations,
     assetFieldSuggestions,
+    assetTemplates,
     assetCounts: new Map(
       counts
         .filter((item) => item.currentLocationId)
