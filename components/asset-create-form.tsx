@@ -72,6 +72,7 @@ export function AssetCreateForm({
   const showBarcodeInMain = view === "STANDARD";
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
+  const showUsageStateInMain = view === "STANDARD";
   const showSizeInMain = view === "CLOTHES";
 
   return (
@@ -215,6 +216,20 @@ export function AssetCreateForm({
         </div>
       ) : null}
 
+      {showUsageStateInMain ? (
+        <div className="field-stack">
+          <label htmlFor="usageState">{dictionary.common.usageState}</label>
+          <select id="usageState" name="usageState" defaultValue="">
+            <option value="">{dictionary.common.optional}</option>
+            {Object.entries(assetUsageStateLabels).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value[locale === "ZH_CN" ? "zh" : "en"]}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <details className="asset-advanced full-span">
         <summary>{dictionary.assets.advancedDetails}</summary>
         <p className="muted asset-advanced-help">{dictionary.assets.advancedHelp}</p>
@@ -342,17 +357,19 @@ export function AssetCreateForm({
             </select>
           </div>
 
-          <div className="field-stack">
-            <label htmlFor="usageState">{dictionary.common.usageState}</label>
-            <select id="usageState" name="usageState" defaultValue="">
-              <option value="">{dictionary.common.optional}</option>
-              {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value[locale === "ZH_CN" ? "zh" : "en"]}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!showUsageStateInMain ? (
+            <div className="field-stack">
+              <label htmlFor="usageState">{dictionary.common.usageState}</label>
+              <select id="usageState" name="usageState" defaultValue="">
+                <option value="">{dictionary.common.optional}</option>
+                {Object.entries(assetUsageStateLabels).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value[locale === "ZH_CN" ? "zh" : "en"]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <AssortedQuantityFields
             assortedLabel={dictionary.common.assorted}
