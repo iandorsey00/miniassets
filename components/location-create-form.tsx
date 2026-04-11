@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { AssetLocationField, type AssetLocationOption } from "@/components/asset-location-field";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { createLocationAction } from "@/lib/actions";
@@ -45,6 +46,12 @@ type LocationCreateFormProps = {
       typeGroupCoordinates: string;
       positionPreset: string;
       positionPresetHelp: string;
+      pickerPlaceholder: string;
+      pickerHelp: string;
+      pickerMatched: string;
+      pickerUnresolved: string;
+      pickerAdvanced: string;
+      pickerLocationId: string;
     };
   };
   locations: LocationOption[];
@@ -73,6 +80,14 @@ export function LocationCreateForm({
   const numericCode = isNumericCodeLocationKind(selectedKind);
   const showPositionPreset = selectedKind === "POSITION";
   const requireCustomNames = showPositionPreset && positionPreset === "OTHER";
+  const pickerOptions: AssetLocationOption[] = useMemo(
+    () =>
+      locations.map((location) => ({
+        id: location.id,
+        path: location.label,
+      })),
+    [locations],
+  );
 
   return (
     <form action={createLocationAction} className="form-grid location-create-form">
@@ -80,28 +95,29 @@ export function LocationCreateForm({
 
       <div className="location-form-card full-span">
         <div className="location-form-card-grid">
-          <div className="field-stack">
-            <label htmlFor="parentId">{dictionary.locations.parent}</label>
-            <select
-              id="parentId"
-              name="parentId"
-              value={parentId}
-              onChange={(event) => {
-                const nextParentId = event.target.value;
-                const nextParentKind = locations.find((location) => location.id === nextParentId)?.kind ?? null;
-                const nextAllowedKinds = getAllowedLocationKinds(nextParentKind);
-                setParentId(nextParentId);
-                setKind((currentKind) => (nextAllowedKinds.includes(currentKind) ? currentKind : (nextAllowedKinds[0] ?? "HOUSE")));
-              }}
-            >
-              <option value="">{dictionary.locations.topLevel}</option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <AssetLocationField
+            inputId="parentId"
+            inputName="parentId"
+            label={dictionary.locations.parent}
+            emptyLabel={dictionary.locations.topLevel}
+            defaultLocationId={parentId || undefined}
+            options={pickerOptions}
+            storageKey={`miniassets:location-create-parent:${workspaceId || "default"}`}
+            onSelectionChange={({ locationId }) => {
+              const nextParentKind = locations.find((location) => location.id === locationId)?.kind ?? null;
+              const nextAllowedKinds = getAllowedLocationKinds(nextParentKind);
+              setParentId(locationId);
+              setKind((currentKind) => (nextAllowedKinds.includes(currentKind) ? currentKind : (nextAllowedKinds[0] ?? "HOUSE")));
+            }}
+            labels={{
+              placeholder: dictionary.locations.pickerPlaceholder,
+              help: dictionary.locations.pickerHelp,
+              matched: dictionary.locations.pickerMatched,
+              unresolved: dictionary.locations.pickerUnresolved,
+              advanced: dictionary.locations.pickerAdvanced,
+              locationId: dictionary.locations.pickerLocationId,
+            }}
+          />
 
           <div className="field-stack">
             <label htmlFor="kind">{dictionary.locations.type}</label>

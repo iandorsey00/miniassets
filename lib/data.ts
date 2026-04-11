@@ -609,6 +609,37 @@ export async function exportWorkspaceData(workspaceId?: string) {
     }),
   ]);
 
+  const directAssetCounts = new Map<string, number>();
+  for (const asset of assets) {
+    if (!asset.currentLocationId) continue;
+    directAssetCounts.set(asset.currentLocationId, (directAssetCounts.get(asset.currentLocationId) ?? 0) + 1);
+  }
+
+  const childrenByParent = new Map<string | null, string[]>();
+  for (const location of locations) {
+    const siblings = childrenByParent.get(location.parentId) ?? [];
+    siblings.push(location.id);
+    childrenByParent.set(location.parentId, siblings);
+  }
+
+  const descendantAssetCounts = new Map<string, number>();
+  function getDescendantAssetCount(locationId: string): number {
+    const cached = descendantAssetCounts.get(locationId);
+    if (typeof cached === "number") {
+      return cached;
+    }
+
+    const directCount = directAssetCounts.get(locationId) ?? 0;
+    const childIds = childrenByParent.get(locationId) ?? [];
+    const total = directCount + childIds.reduce((sum, childId) => sum + getDescendantAssetCount(childId), 0);
+    descendantAssetCounts.set(locationId, total);
+    return total;
+  }
+
+  for (const location of locations) {
+    getDescendantAssetCount(location.id);
+  }
+
   return {
     exportedAt: new Date().toISOString(),
     workspace: {
@@ -625,6 +656,9 @@ export async function exportWorkspaceData(workspaceId?: string) {
     locations: locations.map((location) => ({
       id: location.id,
       parentId: location.parentId,
+      parentPath:
+        location.parentId && locations.length ? buildLocationPath(locations, location.parentId, "EN") : null,
+      childIds: childrenByParent.get(location.id) ?? [],
       kind: location.kind,
       code: location.code,
       nameEn: location.nameEn,
@@ -632,6 +666,8 @@ export async function exportWorkspaceData(workspaceId?: string) {
       notes: location.notes,
       standardizedPath: buildLocationPath(locations, location.id, "EN"),
       localizedPath: buildLocationPath(locations, location.id, context.locale),
+      directAssetCount: directAssetCounts.get(location.id) ?? 0,
+      descendantAssetCount: descendantAssetCounts.get(location.id) ?? 0,
       descriptors: location.descriptors.map((descriptor) => ({
         type: descriptor.type,
         wall: descriptor.wall,

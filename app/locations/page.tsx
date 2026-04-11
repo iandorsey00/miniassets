@@ -20,6 +20,7 @@ import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { pickLocalizedText } from "@/lib/present";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { LocationCreateForm } from "@/components/location-create-form";
+import { LocationMoveForm } from "@/components/location-move-form";
 import { PageHeader, Panel, StatusNotice } from "@/components/ui";
 
 const wallSortOrder = {
@@ -29,29 +30,58 @@ const wallSortOrder = {
   WEST: 3,
 } as const;
 
+function getPerimeterDescriptorSortKey(
+  location: Awaited<ReturnType<typeof getLocationsData>>["locations"][number],
+) {
+  return location.descriptors
+    .filter((descriptor) => descriptor.type === "WALL_ZONE" && descriptor.wall && descriptor.ordinal)
+    .map((descriptor) => ({
+      wall: descriptor.wall!,
+      ordinal: descriptor.ordinal ?? 0,
+      qualifier: descriptor.qualifier?.trim() || "",
+    }))
+    .sort((left, right) => {
+      const wallDelta = wallSortOrder[left.wall] - wallSortOrder[right.wall];
+      if (wallDelta !== 0) {
+        return wallDelta;
+      }
+
+      const ordinalDelta = left.ordinal - right.ordinal;
+      if (ordinalDelta !== 0) {
+        return ordinalDelta;
+      }
+
+      return left.qualifier.localeCompare(right.qualifier, "en", { sensitivity: "base" });
+    })[0];
+}
+
 function compareLocations(
   left: Awaited<ReturnType<typeof getLocationsData>>["locations"][number],
   right: Awaited<ReturnType<typeof getLocationsData>>["locations"][number],
   locale: "ZH_CN" | "EN",
 ) {
-  const leftWallDescriptor = left.descriptors.find((descriptor) => descriptor.type === "WALL_ZONE" && descriptor.wall && descriptor.ordinal);
-  const rightWallDescriptor = right.descriptors.find((descriptor) => descriptor.type === "WALL_ZONE" && descriptor.wall && descriptor.ordinal);
+  const leftWallDescriptor = getPerimeterDescriptorSortKey(left);
+  const rightWallDescriptor = getPerimeterDescriptorSortKey(right);
 
   if (leftWallDescriptor || rightWallDescriptor) {
     if (!leftWallDescriptor) return 1;
     if (!rightWallDescriptor) return -1;
 
-    const leftWall = leftWallDescriptor.wall!;
-    const rightWall = rightWallDescriptor.wall!;
-    const wallDelta =
-      wallSortOrder[leftWall] - wallSortOrder[rightWall];
+    const wallDelta = wallSortOrder[leftWallDescriptor.wall] - wallSortOrder[rightWallDescriptor.wall];
     if (wallDelta !== 0) {
       return wallDelta;
     }
 
-    const ordinalDelta = (leftWallDescriptor.ordinal ?? 0) - (rightWallDescriptor.ordinal ?? 0);
+    const ordinalDelta = leftWallDescriptor.ordinal - rightWallDescriptor.ordinal;
     if (ordinalDelta !== 0) {
       return ordinalDelta;
+    }
+
+    const qualifierDelta = leftWallDescriptor.qualifier.localeCompare(rightWallDescriptor.qualifier, "en", {
+      sensitivity: "base",
+    });
+    if (qualifierDelta !== 0) {
+      return qualifierDelta;
     }
   }
 
@@ -306,6 +336,12 @@ export default async function LocationsPage({
                 typeGroupCoordinates: data.dictionary.locations.typeGroupCoordinates,
                 positionPreset: data.dictionary.locations.positionPreset,
                 positionPresetHelp: data.dictionary.locations.positionPresetHelp,
+                pickerPlaceholder: data.dictionary.locations.pickerPlaceholder,
+                pickerHelp: data.dictionary.locations.pickerHelp,
+                pickerMatched: data.dictionary.locations.pickerMatched,
+                pickerUnresolved: data.dictionary.locations.pickerUnresolved,
+                pickerAdvanced: data.dictionary.locations.pickerAdvanced,
+                pickerLocationId: data.dictionary.locations.pickerLocationId,
               },
             }}
             locations={locationOptions}
@@ -313,45 +349,26 @@ export default async function LocationsPage({
         </Panel>
 
         <Panel title={data.dictionary.locations.moveTitle}>
-          <form action={moveLocationAction} className="form-grid">
-            <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
-
-            <div className="field-stack">
-              <label htmlFor="locationId">{data.dictionary.common.location}</label>
-              <select id="locationId" name="locationId" defaultValue="">
-                <option value="" disabled>
-                  {data.dictionary.locations.chooseLocation}
-                </option>
-                {data.locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {buildLocationPath(data.locations, location.id, data.locale) ||
-                      pickLocalizedText(data.locale, location) ||
-                      location.code ||
-                      location.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field-stack">
-              <label htmlFor="moveParentId">{data.dictionary.locations.newParent}</label>
-              <select id="moveParentId" name="parentId" defaultValue="">
-                <option value="">{data.dictionary.locations.topLevel}</option>
-                {data.locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {buildLocationPath(data.locations, location.id, data.locale) ||
-                      pickLocalizedText(data.locale, location) ||
-                      location.code ||
-                      location.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="full-span">
-              <button type="submit">{data.dictionary.locations.moveLocation}</button>
-            </div>
-          </form>
+          <LocationMoveForm
+            action={moveLocationAction}
+            workspaceId={data.currentWorkspace?.id ?? ""}
+            options={locationOptions.map((location) => ({
+              id: location.id,
+              path: location.label,
+            }))}
+            labels={{
+              location: data.dictionary.common.location,
+              newParent: data.dictionary.locations.newParent,
+              topLevel: data.dictionary.locations.topLevel,
+              move: data.dictionary.locations.moveLocation,
+              placeholder: data.dictionary.locations.pickerPlaceholder,
+              help: data.dictionary.locations.pickerHelp,
+              matched: data.dictionary.locations.pickerMatched,
+              unresolved: data.dictionary.locations.pickerUnresolved,
+              advanced: data.dictionary.locations.pickerAdvanced,
+              locationId: data.dictionary.locations.pickerLocationId,
+            }}
+          />
         </Panel>
 
         <div className="full-span">

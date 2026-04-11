@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export type AssetLocationOption = {
   id: string;
@@ -56,6 +56,8 @@ export function AssetLocationField({
   onSelectionChange,
   labels,
 }: AssetLocationFieldProps) {
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const advancedInputRef = useRef<HTMLInputElement | null>(null);
   const optionById = useMemo(() => new Map(options.map((option) => [option.id, option])), [options]);
 
   const lookupMap = useMemo(() => {
@@ -189,14 +191,29 @@ export function AssetLocationField({
     });
   }, [locationId, matchedOption, onSelectionChange]);
 
+  function moveCaretToEnd(input: HTMLInputElement | null) {
+    if (!input) {
+      return;
+    }
+
+    const nextPosition = input.value.length;
+    window.requestAnimationFrame(() => {
+      try {
+        input.setSelectionRange(nextPosition, nextPosition);
+      } catch {}
+    });
+  }
+
   return (
     <div className="field-stack location-picker full-span">
       <label htmlFor={`${inputId}-search`}>{label}</label>
       <input type="hidden" id={inputId} name={inputName} value={locationId} />
       <input
         id={`${inputId}-search`}
+        ref={searchInputRef}
         value={query}
         placeholder={labels.placeholder}
+        onFocus={() => moveCaretToEnd(searchInputRef.current)}
         onChange={(event) => {
           const nextQuery = event.target.value;
           const nextLocationId = resolveLocationId(nextQuery);
@@ -261,7 +278,9 @@ export function AssetLocationField({
           <label htmlFor={`${inputId}-advanced`}>{labels.locationId}</label>
           <input
             id={`${inputId}-advanced`}
+            ref={advancedInputRef}
             value={advancedId}
+            onFocus={() => moveCaretToEnd(advancedInputRef.current)}
             onChange={(event) => {
               const nextId = event.target.value.trim();
               setAdvancedId(nextId);
