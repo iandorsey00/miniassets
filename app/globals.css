@@ -218,6 +218,17 @@
   margin: 0.7rem 0 0.9rem;
 }
 
+.asset-create-view-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.asset-create-view-label {
+  white-space: nowrap;
+}
+
 .search-actions {
   align-self: end;
 }
