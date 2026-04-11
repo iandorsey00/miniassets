@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { bulkUpdateAssetsByLocationAction } from "@/lib/actions";
 import { AssetRow, Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
 import { assetStatusLabels } from "@/lib/constants";
 import { buildLocationPath, getAssetsData } from "@/lib/data";
@@ -14,10 +15,27 @@ export default async function AssetsPage({
     status?: "ACTIVE" | "MISSING" | "ARCHIVED";
     usageState?: "STORAGE" | "IN_USE";
     assorted?: "true";
+    locationId?: string;
+    bulkUpdated?: "1";
+    bulkCount?: string;
+    bulkError?: "confirm";
   }>;
 }) {
   const params = await searchParams;
   const data = await getAssetsData(params);
+  const locationOptions = data.locations
+    .map((location) => ({
+      id: location.id,
+      path: buildLocationPath(data.locations, location.id, data.locale),
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path, data.localeCode));
+  const bulkCount = Number.parseInt(params.bulkCount ?? "0", 10);
+  const bulkSavedMessage =
+    params.bulkUpdated === "1"
+      ? data.dictionary.assets.bulkEditSaved.replace("{count}", String(Number.isFinite(bulkCount) ? bulkCount : 0))
+      : null;
+  const bulkErrorMessage = params.bulkError === "confirm" ? data.dictionary.assets.bulkEditConfirmRequired : null;
+  const bulkCountMessage = data.dictionary.assets.bulkEditCount.replace("{count}", String(data.assets.length));
 
   return (
     <>
@@ -50,6 +68,18 @@ export default async function AssetsPage({
                 defaultValue={params.q ?? ""}
                 placeholder={data.dictionary.assets.searchPlaceholder}
               />
+            </div>
+
+            <div className="field-stack">
+              <label htmlFor="locationFilter">{data.dictionary.assets.locationFilter}</label>
+              <select id="locationFilter" name="locationId" defaultValue={params.locationId ?? ""}>
+                <option value="">{data.dictionary.common.optional}</option>
+                {locationOptions.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.path}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="field-stack">
@@ -86,8 +116,62 @@ export default async function AssetsPage({
               <button type="submit">{data.dictionary.common.search}</button>
             </div>
           </form>
+
+          {params.locationId ? (
+            <div className="location-filter-summary">
+              <p className="muted">{data.dictionary.assets.bulkEditFilterHint}</p>
+              {data.selectedLocationPath ? <p className="muted">{data.selectedLocationPath}</p> : null}
+            </div>
+          ) : null}
         </div>
       </Panel>
+
+      {params.locationId ? (
+        <Panel>
+          <div className="section-stack">
+            <div className="split-line">
+              <div>
+                <strong>{data.dictionary.assets.bulkEditTitle}</strong>
+                <p className="muted bulk-edit-copy">{data.dictionary.assets.bulkEditHelp}</p>
+                <p className="muted bulk-edit-copy">{bulkCountMessage}</p>
+                {bulkSavedMessage ? <p className="muted save-confirmation">{bulkSavedMessage}</p> : null}
+                {bulkErrorMessage ? <p className="form-error">{bulkErrorMessage}</p> : null}
+              </div>
+              <div className="button-content">
+                <Badge label={String(data.assets.length)} tone="accent" />
+              </div>
+            </div>
+
+            <form action={bulkUpdateAssetsByLocationAction} className="form-grid">
+              <input type="hidden" name="workspaceId" value={data.currentWorkspace?.id ?? ""} />
+              <input type="hidden" name="locationId" value={params.locationId} />
+              <input type="hidden" name="q" value={params.q ?? ""} />
+              <input type="hidden" name="status" value={params.status ?? ""} />
+              <input type="hidden" name="usageStateFilter" value={params.usageState ?? ""} />
+              <input type="hidden" name="assorted" value={params.assorted ?? ""} />
+
+              <div className="field-stack">
+                <label htmlFor="bulkUsageState">{data.dictionary.assets.bulkEditUsageState}</label>
+                <select id="bulkUsageState" name="nextUsageState" defaultValue="STORAGE" disabled={!data.assets.length}>
+                  <option value="STORAGE">{data.dictionary.common.storage}</option>
+                  <option value="IN_USE">{data.dictionary.common.inUse}</option>
+                  <option value="CLEAR">{data.dictionary.assets.bulkEditClearUsageState}</option>
+                </select>
+              </div>
+
+              <div className="field-stack search-actions bulk-edit-actions">
+                <label className="checkbox-row bulk-edit-confirm" htmlFor="confirmBulk">
+                  <input id="confirmBulk" name="confirmBulk" type="checkbox" disabled={!data.assets.length} />
+                  <span>{data.dictionary.assets.bulkEditConfirm}</span>
+                </label>
+                <button type="submit" disabled={!data.assets.length}>
+                  {data.dictionary.assets.bulkEditApply}
+                </button>
+              </div>
+            </form>
+          </div>
+        </Panel>
+      ) : null}
 
       {data.assets.length ? (
         <div className="section-stack">

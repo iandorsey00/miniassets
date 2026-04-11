@@ -5,7 +5,7 @@ import { AssortedQuantityFields } from "@/components/assorted-quantity-fields";
 import { AssetShareActions } from "@/components/asset-share-actions";
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
-import { Badge, EmptyState, PageHeader, Panel } from "@/components/ui";
+import { Badge, EmptyState, PageHeader, Panel, StatusNotice } from "@/components/ui";
 import { deleteAssetAction, duplicateAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
   assetStatusLabels,
@@ -113,6 +113,8 @@ export default async function AssetDetailPage({
           />
         }
       />
+
+      {pageParams.saved === "1" ? <StatusNotice message={data.dictionary.common.savedMessage} /> : null}
 
       <div className="grid-2">
         <Panel title={data.dictionary.assets.detailTitle}>
@@ -281,7 +283,6 @@ export default async function AssetDetailPage({
       </div>
 
       <Panel title={data.dictionary.assets.editTitle}>
-        {pageParams.saved === "1" ? <p className="muted save-confirmation">{data.dictionary.common.savedMessage}</p> : null}
         <form action={updateAssetAction} className="form-grid">
           <input type="hidden" name="assetId" value={data.asset.id} />
           <input type="hidden" name="workspaceId" value={data.asset.workspaceId} />

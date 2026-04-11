@@ -78,6 +78,16 @@ export function Badge({
   return <span className={`badge badge-${tone}`}>{label}</span>;
 }
 
+export function StatusNotice({
+  message,
+  tone = "success",
+}: {
+  message: string;
+  tone?: "success" | "warning" | "danger" | "accent" | "neutral";
+}) {
+  return <div className={`status-notice status-notice-${tone}`}>{message}</div>;
+}
+
 export function AssetRow({
   href,
   code,

@@ -124,6 +124,28 @@ function formatLocationSegmentLabel<
   return normalizedCode || node.id;
 }
 
+export function collectLocationDescendantIds<
+  T extends {
+    id: string;
+    parentId: string | null;
+  },
+>(nodes: T[], rootId: string) {
+  const descendants = new Set<string>([rootId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const node of nodes) {
+      if (node.parentId && descendants.has(node.parentId) && !descendants.has(node.id)) {
+        descendants.add(node.id);
+        changed = true;
+      }
+    }
+  }
+
+  return descendants;
+}
+
 export function buildLocationPath<
   T extends {
     id: string;
@@ -194,7 +216,7 @@ async function getAssetFieldSuggestions(workspaceId: string) {
   };
 }
 
-function buildAssetSearchText(
+export function buildAssetSearchText(
   asset: {
     assetCode: string;
     nameEn: string | null;
@@ -311,39 +333,49 @@ export async function getAssetsData(filters: {
   status?: AssetStatus;
   usageState?: "STORAGE" | "IN_USE";
   assorted?: "true";
+  locationId?: string;
 }) {
   const context = await getViewerContext(filters.workspaceId);
   if (!context.currentWorkspace) {
-    return { ...context, assets: [], locations: [] };
+    return { ...context, assets: [], locations: [], selectedLocationPath: "" };
   }
+
+  const locations = await prisma.locationNode.findMany({
+    where: { workspaceId: context.currentWorkspace.id },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+
+  const selectedLocationPath =
+    filters.locationId && locations.length
+      ? buildLocationPath(locations, filters.locationId, context.locale)
+      : "";
+
+  const scopedLocationIds = filters.locationId
+    ? Array.from(collectLocationDescendantIds(locations, filters.locationId))
+    : [];
 
   const where: Prisma.AssetWhereInput = {
     workspaceId: context.currentWorkspace.id,
     status: filters.status || undefined,
     usageState: filters.usageState || undefined,
     isAssorted: filters.assorted === "true" ? true : undefined,
+    currentLocationId: filters.locationId ? { in: scopedLocationIds } : undefined,
   };
 
-  const [assets, locations] = await Promise.all([
-    prisma.asset.findMany({
-      where,
-      include: {
-        currentLocation: true,
-      },
-      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-    }),
-    prisma.locationNode.findMany({
-      where: { workspaceId: context.currentWorkspace.id },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    }),
-  ]);
+  const assets = await prisma.asset.findMany({
+    where,
+    include: {
+      currentLocation: true,
+    },
+    orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+  });
 
   const query = filters.q?.trim().toLowerCase();
   const filteredAssets = query
     ? assets.filter((asset) => buildAssetSearchText(asset, locations).includes(query))
     : assets;
 
-  return { ...context, assets: filteredAssets, locations };
+  return { ...context, assets: filteredAssets, locations, selectedLocationPath };
 }
 
 export async function getAssetDetail(assetId: string) {

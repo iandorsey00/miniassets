@@ -20,7 +20,7 @@ import { formatLocationDescriptor } from "@/lib/location-descriptors";
 import { pickLocalizedText } from "@/lib/present";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { LocationCreateForm } from "@/components/location-create-form";
-import { PageHeader, Panel } from "@/components/ui";
+import { PageHeader, Panel, StatusNotice } from "@/components/ui";
 
 const wallSortOrder = {
   NORTH: 0,
@@ -278,9 +278,10 @@ export default async function LocationsPage({
     <>
       <PageHeader title={data.dictionary.locations.title} subtitle={data.dictionary.locations.subtitle} />
 
+      {params.saved === "1" ? <StatusNotice message={data.dictionary.common.savedMessage} /> : null}
+
       <div className="grid-2">
         <Panel title={data.dictionary.locations.createTitle}>
-          {params.saved === "1" ? <div className="hero-note">{data.dictionary.locations.savedMessage}</div> : null}
           <LocationCreateForm
             workspaceId={data.currentWorkspace?.id ?? ""}
             locale={data.locale}

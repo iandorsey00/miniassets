@@ -17,7 +17,7 @@ import {
   wallDirectionValues,
   WORKSPACE_COOKIE,
 } from "@/lib/constants";
-import { getViewerContext } from "@/lib/data";
+import { buildAssetSearchText, collectLocationDescendantIds, getViewerContext } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
 function optionalPositiveNumber(max: number) {
@@ -205,6 +205,17 @@ const deleteAssetSchema = z.object({
 
 const duplicateAssetSchema = z.object({
   assetId: z.string().min(1),
+});
+
+const bulkUpdateAssetsByLocationSchema = z.object({
+  workspaceId: z.string().min(1),
+  locationId: z.string().min(1),
+  q: z.string().trim().max(200).optional(),
+  status: z.enum(["ACTIVE", "MISSING", "ARCHIVED"]).optional(),
+  usageStateFilter: z.enum(["STORAGE", "IN_USE"]).optional(),
+  assorted: z.enum(["true"]).optional(),
+  nextUsageState: z.enum(["STORAGE", "IN_USE", "CLEAR"]),
+  confirmBulk: z.literal("on"),
 });
 
 function revalidateWorkspaceViews() {
@@ -479,26 +490,6 @@ export async function createLocationAction(formData: FormData) {
   redirect(`/locations?${nextParams.toString()}`);
 }
 
-function collectDescendantIds(
-  locations: Array<{ id: string; parentId: string | null }>,
-  rootId: string,
-) {
-  const descendants = new Set<string>([rootId]);
-  let changed = true;
-
-  while (changed) {
-    changed = false;
-    for (const location of locations) {
-      if (location.parentId && descendants.has(location.parentId) && !descendants.has(location.id)) {
-        descendants.add(location.id);
-        changed = true;
-      }
-    }
-  }
-
-  return descendants;
-}
-
 export async function moveLocationAction(formData: FormData) {
   const parsed = moveLocationSchema.parse({
     workspaceId: formData.get("workspaceId"),
@@ -527,7 +518,7 @@ export async function moveLocationAction(formData: FormData) {
   }
 
   if (nextParentId) {
-    const descendants = collectDescendantIds(locations, parsed.locationId);
+    const descendants = collectLocationDescendantIds(locations, parsed.locationId);
     if (descendants.has(nextParentId)) {
       throw new Error("A location cannot be moved under itself or one of its descendants.");
     }
@@ -1156,4 +1147,134 @@ export async function duplicateAssetAction(formData: FormData) {
 
   revalidateWorkspaceViews();
   redirect(`/assets/${duplicatedAsset.id}?saved=1`);
+}
+
+export async function bulkUpdateAssetsByLocationAction(formData: FormData) {
+  const rawValues = {
+    workspaceId: formData.get("workspaceId"),
+    locationId: formData.get("locationId"),
+    q: formData.get("q") || undefined,
+    status: formData.get("status") || undefined,
+    usageStateFilter: formData.get("usageStateFilter") || undefined,
+    assorted: formData.get("assorted") || undefined,
+    nextUsageState: formData.get("nextUsageState"),
+    confirmBulk: formData.get("confirmBulk"),
+  };
+  const parsedResult = bulkUpdateAssetsByLocationSchema.safeParse(rawValues);
+  if (!parsedResult.success) {
+    const nextParams = new URLSearchParams();
+    nextParams.set("workspaceId", String(rawValues.workspaceId || ""));
+    nextParams.set("locationId", String(rawValues.locationId || ""));
+    nextParams.set("bulkError", "confirm");
+
+    if (typeof rawValues.q === "string" && rawValues.q) {
+      nextParams.set("q", rawValues.q);
+    }
+
+    if (typeof rawValues.status === "string" && rawValues.status) {
+      nextParams.set("status", rawValues.status);
+    }
+
+    if (typeof rawValues.usageStateFilter === "string" && rawValues.usageStateFilter) {
+      nextParams.set("usageState", rawValues.usageStateFilter);
+    }
+
+    if (typeof rawValues.assorted === "string" && rawValues.assorted) {
+      nextParams.set("assorted", rawValues.assorted);
+    }
+
+    redirect(`/assets?${nextParams.toString()}`);
+  }
+  const parsed = parsedResult.data;
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const locations = await prisma.locationNode.findMany({
+    where: { workspaceId: parsed.workspaceId },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+
+  const selectedLocation = locations.find((location) => location.id === parsed.locationId);
+  if (!selectedLocation) {
+    throw new Error("Location not found.");
+  }
+
+  const scopedLocationIds = Array.from(collectLocationDescendantIds(locations, parsed.locationId));
+  const assets = await prisma.asset.findMany({
+    where: {
+      workspaceId: parsed.workspaceId,
+      status: parsed.status || undefined,
+      usageState: parsed.usageStateFilter || undefined,
+      isAssorted: parsed.assorted === "true" ? true : undefined,
+      currentLocationId: { in: scopedLocationIds },
+    },
+    select: {
+      id: true,
+      assetCode: true,
+      nameEn: true,
+      nameZh: true,
+      color: true,
+      primaryColor: true,
+      secondaryColor: true,
+      brand: true,
+      brandZh: true,
+      model: true,
+      variant: true,
+      variantZh: true,
+      subvariant: true,
+      subvariantZh: true,
+      size: true,
+      lengthValue: true,
+      lengthUnit: true,
+      barcodeValue: true,
+      description: true,
+      notes: true,
+      currentLocationId: true,
+    },
+  });
+
+  const query = parsed.q?.trim().toLowerCase();
+  const matchingAssetIds = query
+    ? assets
+        .filter((asset) => buildAssetSearchText(asset, locations).includes(query))
+        .map((asset) => asset.id)
+    : assets.map((asset) => asset.id);
+
+  if (matchingAssetIds.length) {
+    await prisma.asset.updateMany({
+      where: { id: { in: matchingAssetIds } },
+      data: {
+        usageState: parsed.nextUsageState === "CLEAR" ? null : parsed.nextUsageState,
+      },
+    });
+  }
+
+  revalidateWorkspaceViews();
+
+  const nextParams = new URLSearchParams();
+  nextParams.set("workspaceId", parsed.workspaceId);
+  nextParams.set("locationId", parsed.locationId);
+  nextParams.set("bulkUpdated", "1");
+  nextParams.set("bulkCount", String(matchingAssetIds.length));
+
+  if (parsed.q) {
+    nextParams.set("q", parsed.q);
+  }
+
+  if (parsed.status) {
+    nextParams.set("status", parsed.status);
+  }
+
+  if (parsed.usageStateFilter) {
+    nextParams.set("usageState", parsed.usageStateFilter);
+  }
+
+  if (parsed.assorted) {
+    nextParams.set("assorted", parsed.assorted);
+  }
+
+  redirect(`/assets?${nextParams.toString()}`);
 }
