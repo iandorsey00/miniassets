@@ -528,16 +528,42 @@ export async function getLocationsData(workspaceId?: string) {
     getAssetTemplates(context.currentWorkspace.id, context.locale),
   ]);
 
+  const directAssetCounts = new Map(
+    counts
+      .filter((item) => item.currentLocationId)
+      .map((item) => [item.currentLocationId as string, item._count._all]),
+  );
+  const childrenByParent = new Map<string | null, string[]>();
+  for (const location of locations) {
+    const siblings = childrenByParent.get(location.parentId) ?? [];
+    siblings.push(location.id);
+    childrenByParent.set(location.parentId, siblings);
+  }
+
+  const aggregatedAssetCounts = new Map<string, number>();
+  function getAggregatedCount(locationId: string): number {
+    const cached = aggregatedAssetCounts.get(locationId);
+    if (typeof cached === "number") {
+      return cached;
+    }
+
+    const directCount = directAssetCounts.get(locationId) ?? 0;
+    const childIds = childrenByParent.get(locationId) ?? [];
+    const total = directCount + childIds.reduce((sum, childId) => sum + getAggregatedCount(childId), 0);
+    aggregatedAssetCounts.set(locationId, total);
+    return total;
+  }
+
+  for (const location of locations) {
+    getAggregatedCount(location.id);
+  }
+
   return {
     ...context,
     locations,
     assetFieldSuggestions,
     assetTemplates,
-    assetCounts: new Map(
-      counts
-        .filter((item) => item.currentLocationId)
-        .map((item) => [item.currentLocationId as string, item._count._all]),
-    ),
+    assetCounts: aggregatedAssetCounts,
   };
 }
 
