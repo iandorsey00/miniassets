@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AssetIcon, DashboardIcon, ExportIcon, LocationIcon, LogoutIcon, PencilIcon, SearchIcon, SwitchIcon } from "@/components/icons";
+import {
+  AssetIcon,
+  DashboardIcon,
+  ExportIcon,
+  LocationIcon,
+  LogoutIcon,
+  PencilIcon,
+  SearchIcon,
+  SettingsIcon,
+  SwitchIcon,
+} from "@/components/icons";
 import { logoutAction, switchWorkspaceAction } from "@/lib/actions";
 
 type ShellProps = {
@@ -15,6 +25,7 @@ type ShellProps = {
       assets: string;
       locations: string;
       export: string;
+      settings: string;
       createAsset: string;
       logout: string;
       switchWorkspace: string;
@@ -70,6 +81,7 @@ export function AppShell({
     { href: "/assets", label: dictionary.nav.assets, icon: AssetIcon },
     { href: "/locations", label: dictionary.nav.locations, icon: LocationIcon },
     { href: "/export", label: dictionary.nav.export, icon: ExportIcon },
+    { href: "/settings", label: dictionary.nav.settings, icon: SettingsIcon },
   ];
 
   return (

@@ -6,6 +6,7 @@ import {
   FolderTree,
   LayoutDashboard,
   LogOut,
+  Settings,
   QrCode,
   Save,
   Search,
@@ -64,4 +65,8 @@ export function PencilIcon({ className }: IconProps) {
 
 export function BarcodeIcon({ className }: IconProps) {
   return <IconBase className={className} icon={QrCode} />;
+}
+
+export function SettingsIcon({ className }: IconProps) {
+  return <IconBase className={className} icon={Settings} />;
 }

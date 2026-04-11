@@ -22,6 +22,7 @@ export default async function DashboardPage({
       {data.stats ? (
         <div className="grid-4">
           <StatCard label={data.dictionary.dashboard.trackedAssets} value={data.stats.assetCount} />
+          <StatCard label={data.dictionary.dashboard.estimatedTotalItems} value={data.stats.estimatedTotalItems} />
           <StatCard label={data.dictionary.dashboard.locationNodes} value={data.stats.locationCount} />
           <StatCard label={data.dictionary.dashboard.missingAssets} value={data.stats.missingCount} />
           <StatCard label={data.dictionary.dashboard.recentlyVerified} value={data.stats.recentlyVerifiedCount} />

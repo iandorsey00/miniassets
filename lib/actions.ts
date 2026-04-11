@@ -219,10 +219,15 @@ const bulkUpdateAssetsByLocationSchema = z.object({
   confirmBulk: z.literal("on"),
 });
 
+const updateSettingsSchema = z.object({
+  unrecordedItemsPerThousand: z.coerce.number().int().min(0).max(500),
+});
+
 function revalidateWorkspaceViews() {
   revalidatePath("/locations");
   revalidatePath("/dashboard");
   revalidatePath("/assets");
+  revalidatePath("/settings");
 }
 
 function normalizeLocationCode(value: string | undefined) {
@@ -1319,4 +1324,22 @@ export async function bulkUpdateAssetsByLocationAction(formData: FormData) {
   }
 
   redirect(`/assets?${nextParams.toString()}`);
+}
+
+export async function updateSettingsAction(formData: FormData) {
+  const parsed = updateSettingsSchema.parse({
+    unrecordedItemsPerThousand: formData.get("unrecordedItemsPerThousand"),
+  });
+
+  const user = await requireUser();
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      unrecordedItemsPerThousand: parsed.unrecordedItemsPerThousand,
+    },
+  });
+
+  revalidateWorkspaceViews();
+  redirect("/settings?saved=1");
 }

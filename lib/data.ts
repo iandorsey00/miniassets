@@ -334,7 +334,15 @@ export async function getDashboardData(workspaceId?: string) {
     return { ...context, stats: null, recentMoves: [], assets: [] };
   }
 
-  const [assetCount, locationCount, missingCount, recentlyVerifiedCount, recentMoves, assets] =
+  const [
+    assetCount,
+    locationCount,
+    missingCount,
+    recentlyVerifiedCount,
+    quantityAggregate,
+    recentMoves,
+    assets,
+  ] =
     await Promise.all([
       prisma.asset.count({
         where: { workspaceId: context.currentWorkspace.id, status: { not: "ARCHIVED" } },
@@ -351,6 +359,15 @@ export async function getDashboardData(workspaceId?: string) {
           lastVerifiedAt: {
             gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
           },
+        },
+      }),
+      prisma.asset.aggregate({
+        where: {
+          workspaceId: context.currentWorkspace.id,
+          status: { not: "ARCHIVED" },
+        },
+        _sum: {
+          quantity: true,
         },
       }),
       prisma.assetPlacement.findMany({
@@ -380,9 +397,24 @@ export async function getDashboardData(workspaceId?: string) {
       locationCount,
       missingCount,
       recentlyVerifiedCount,
+      recordedQuantity: quantityAggregate._sum.quantity ?? 0,
+      estimatedTotalItems:
+        (quantityAggregate._sum.quantity ?? 0) +
+        Math.round(((quantityAggregate._sum.quantity ?? 0) * context.user.unrecordedItemsPerThousand) / 1000),
     },
     recentMoves,
     assets,
+  };
+}
+
+export async function getSettingsData() {
+  const context = await getViewerContext();
+
+  return {
+    ...context,
+    settings: {
+      unrecordedItemsPerThousand: context.user.unrecordedItemsPerThousand,
+    },
   };
 }
 

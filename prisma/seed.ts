@@ -15,6 +15,7 @@ async function main() {
       role: "ADMIN",
       locale: "EN",
       accentColor: "TEAL",
+      unrecordedItemsPerThousand: 10,
     },
   });
 

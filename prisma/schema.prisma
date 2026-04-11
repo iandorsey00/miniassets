@@ -104,6 +104,7 @@ model User {
   timeZone         String                @default("America/Los_Angeles")
   themePreference  ThemePreference       @default(SYSTEM)
   accentColor      AccentColor           @default(BLUE)
+  unrecordedItemsPerThousand Int         @default(10)
   isActive         Boolean               @default(true)
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
