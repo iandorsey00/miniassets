@@ -24,7 +24,7 @@ export default async function NewAssetPage({
     <>
       <PageHeader title={data.dictionary.assets.newTitle} subtitle={data.dictionary.assets.subtitle} />
 
-      <div className="grid-2">
+      <div className="asset-create-layout">
         <Panel title={data.dictionary.assets.scannerTitle}>
           <div className="stack">
             <p className="muted">{data.dictionary.assets.scannerHelp}</p>

@@ -366,6 +366,23 @@ textarea {
   justify-content: flex-start;
 }
 
+.asset-create-layout {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .asset-create-layout {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  }
+
+  .asset-create-layout > :first-child {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
 .location-picker {
   gap: 0.55rem;
 }
