@@ -108,7 +108,7 @@ export function AssetCreateForm({
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
   const showUsageStateInMain = view === "STANDARD";
-  const showQuantityInMain = view === "STANDARD";
+  const showQuantityInMain = view === "STANDARD" || view === "CLOTHES";
   const showSizeInMain = view === "CLOTHES";
 
   return (
