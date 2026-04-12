@@ -132,7 +132,9 @@ const createAssetSchema = z
     quantity: z.coerce.number().int().min(1).max(100000),
     isAssorted: z.coerce.boolean().optional(),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
-    usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
+    usageFrequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "RARE"]).default("WEEKLY"),
+    stockStatus: z.enum(["ACTIVE", "BACKUP"]).default("ACTIVE"),
+    sizeType: z.enum(["SMALL", "MEDIUM", "BULKY"]).default("MEDIUM"),
     isLowStock: z.coerce.boolean().optional(),
     sensitivityLevel: z.enum(["LOW", "MEDIUM"]),
     notes: z.string().trim().max(1000).optional(),
@@ -172,7 +174,9 @@ const updateAssetSchema = z
     quantity: z.coerce.number().int().min(1).max(100000),
     isAssorted: z.coerce.boolean().optional(),
     trackingMode: z.enum(["INDIVIDUAL", "GROUP"]),
-    usageState: z.enum(["STORAGE", "IN_USE"]).optional(),
+    usageFrequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "RARE"]),
+    stockStatus: z.enum(["ACTIVE", "BACKUP"]),
+    sizeType: z.enum(["SMALL", "MEDIUM", "BULKY"]),
     isLowStock: z.coerce.boolean().optional(),
     sensitivityLevel: z.enum(["LOW", "MEDIUM"]),
     notes: z.string().trim().max(1000).optional(),
@@ -383,6 +387,10 @@ function normalizeSizeValue(value: string | undefined) {
   }
 
   return collapsed;
+}
+
+function deriveUsageStateFromStockStatus(stockStatus: "ACTIVE" | "BACKUP") {
+  return stockStatus === "ACTIVE" ? ("IN_USE" as const) : ("STORAGE" as const);
 }
 
 async function canonicalizeWorkspaceValue(
@@ -853,7 +861,9 @@ export async function createAssetAction(formData: FormData) {
     quantity: formData.get("quantity"),
     isAssorted: formData.get("isAssorted") || undefined,
     trackingMode: formData.get("trackingMode"),
-    usageState: formData.get("usageState") || undefined,
+    usageFrequency: formData.get("usageFrequency") || "WEEKLY",
+    stockStatus: formData.get("stockStatus") || "ACTIVE",
+    sizeType: formData.get("sizeType") || "MEDIUM",
     isLowStock: formData.get("isLowStock") || undefined,
     sensitivityLevel: formData.get("sensitivityLevel"),
     notes: formData.get("notes") || undefined,
@@ -912,7 +922,10 @@ export async function createAssetAction(formData: FormData) {
       quantity: parsed.quantity,
       isAssorted: Boolean(parsed.isAssorted),
       trackingMode: parsed.trackingMode,
-      usageState: parsed.usageState || null,
+      usageFrequency: parsed.usageFrequency,
+      stockStatus: parsed.stockStatus,
+      sizeType: parsed.sizeType,
+      usageState: deriveUsageStateFromStockStatus(parsed.stockStatus),
       isLowStock: Boolean(parsed.isLowStock),
       sensitivityLevel: parsed.sensitivityLevel,
       notes: parsed.notes || null,
@@ -964,7 +977,9 @@ export async function updateAssetAction(formData: FormData) {
     quantity: formData.get("quantity"),
     isAssorted: formData.get("isAssorted") || undefined,
     trackingMode: formData.get("trackingMode"),
-    usageState: formData.get("usageState") || undefined,
+    usageFrequency: formData.get("usageFrequency") || "WEEKLY",
+    stockStatus: formData.get("stockStatus") || "ACTIVE",
+    sizeType: formData.get("sizeType") || "MEDIUM",
     isLowStock: formData.get("isLowStock") || undefined,
     sensitivityLevel: formData.get("sensitivityLevel"),
     notes: formData.get("notes") || undefined,
@@ -1029,7 +1044,10 @@ export async function updateAssetAction(formData: FormData) {
       quantity: parsed.quantity,
       isAssorted: Boolean(parsed.isAssorted),
       trackingMode: parsed.trackingMode,
-      usageState: parsed.usageState || null,
+      usageFrequency: parsed.usageFrequency,
+      stockStatus: parsed.stockStatus,
+      sizeType: parsed.sizeType,
+      usageState: deriveUsageStateFromStockStatus(parsed.stockStatus),
       isLowStock: Boolean(parsed.isLowStock),
       sensitivityLevel: parsed.sensitivityLevel,
       notes: parsed.notes || null,
@@ -1173,6 +1191,9 @@ export async function duplicateAssetAction(formData: FormData) {
       quantity: asset.quantity,
       isAssorted: asset.isAssorted,
       trackingMode: asset.trackingMode,
+      usageFrequency: asset.usageFrequency,
+      stockStatus: asset.stockStatus,
+      sizeType: asset.sizeType,
       usageState: asset.usageState,
       isLowStock: asset.isLowStock,
       sensitivityLevel: asset.sensitivityLevel,
@@ -1274,6 +1295,9 @@ export async function bulkUpdateAssetsByLocationAction(formData: FormData) {
       subvariant: true,
       subvariantZh: true,
       size: true,
+      usageFrequency: true,
+      stockStatus: true,
+      sizeType: true,
       lengthValue: true,
       lengthUnit: true,
       barcodeValue: true,
@@ -1294,7 +1318,8 @@ export async function bulkUpdateAssetsByLocationAction(formData: FormData) {
     await prisma.asset.updateMany({
       where: { id: { in: matchingAssetIds } },
       data: {
-        usageState: parsed.nextUsageState === "CLEAR" ? null : parsed.nextUsageState,
+        stockStatus: parsed.nextUsageState === "CLEAR" ? "BACKUP" : parsed.nextUsageState === "IN_USE" ? "ACTIVE" : "BACKUP",
+        usageState: parsed.nextUsageState === "CLEAR" ? "STORAGE" : parsed.nextUsageState,
       },
     });
   }

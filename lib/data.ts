@@ -199,6 +199,9 @@ async function getAssetFieldSuggestions(workspaceId: string) {
       subvariant: true,
       subvariantZh: true,
       size: true,
+      usageFrequency: true,
+      stockStatus: true,
+      sizeType: true,
       barcodeSource: true,
     },
   });
@@ -242,6 +245,9 @@ async function getAssetTemplates(
       subvariant: true,
       subvariantZh: true,
       size: true,
+      usageFrequency: true,
+      stockStatus: true,
+      sizeType: true,
       barcodeValue: true,
       barcodeFormat: true,
       barcodeSource: true,
@@ -284,6 +290,9 @@ export function buildAssetSearchText(
     subvariant: string | null;
     subvariantZh: string | null;
     size: string | null;
+    usageFrequency: string | null;
+    stockStatus: string | null;
+    sizeType: string | null;
     lengthValue: number | null;
     lengthUnit: string | null;
     barcodeValue: string | null;
@@ -314,6 +323,9 @@ export function buildAssetSearchText(
     asset.subvariantZh,
     formatSizeLabel("EN", asset.size),
     formatSizeLabel("ZH_CN", asset.size),
+    asset.usageFrequency,
+    asset.stockStatus,
+    asset.sizeType,
     asset.lengthValue ? String(asset.lengthValue) : "",
     asset.lengthUnit,
     asset.barcodeValue,
@@ -742,6 +754,9 @@ export async function exportWorkspaceData(workspaceId?: string) {
       subvariant: asset.subvariant,
       subvariantZh: asset.subvariantZh,
       size: asset.size,
+      usageFrequency: asset.usageFrequency,
+      stockStatus: asset.stockStatus,
+      sizeType: asset.sizeType,
       description: asset.description,
       barcodeValue: asset.barcodeValue,
       barcodeFormat: asset.barcodeFormat,

@@ -8,7 +8,9 @@ import { AssetTemplateSuggestions } from "@/components/asset-template-suggestion
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import {
-  assetUsageStateLabels,
+  assetSizeTypeLabels,
+  assetStockStatusLabels,
+  assetUsageFrequencyLabels,
   capacityUnitLabels,
   capacityUnitValues,
   commonColorLabels,
@@ -50,6 +52,9 @@ type AssetTemplate = {
   subvariant: string | null;
   subvariantZh: string | null;
   size: string | null;
+  usageFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "RARE" | null;
+  stockStatus: "ACTIVE" | "BACKUP" | null;
+  sizeType: "SMALL" | "MEDIUM" | "BULKY" | null;
   barcodeValue: string | null;
   barcodeFormat: string | null;
   barcodeSource: string | null;
@@ -107,7 +112,6 @@ export function AssetCreateForm({
   const showBarcodeInMain = view === "STANDARD";
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
-  const showUsageStateInMain = view === "STANDARD";
   const showQuantityInMain = view === "STANDARD" || view === "CLOTHES";
   const showSizeInMain = view === "CLOTHES";
 
@@ -252,19 +256,41 @@ export function AssetCreateForm({
         </div>
       ) : null}
 
-      {showUsageStateInMain ? (
-        <div className="field-stack">
-          <label htmlFor="usageState">{dictionary.common.usageState}</label>
-          <select id="usageState" name="usageState" defaultValue="">
-            <option value="">{dictionary.common.optional}</option>
-            {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-              <option key={key} value={key}>
-                {value[locale === "ZH_CN" ? "zh" : "en"]}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
+      <div className="field-stack">
+        <label htmlFor="usageFrequency">{dictionary.common.usageFrequency}</label>
+        <select id="usageFrequency" name="usageFrequency" defaultValue="WEEKLY">
+          {Object.entries(assetUsageFrequencyLabels).map(([key, value]) => (
+            <option key={key} value={key}>
+              {value[locale === "ZH_CN" ? "zh" : "en"]}
+            </option>
+          ))}
+        </select>
+        <p className="muted">{dictionary.assets.usageFrequencyHelp}</p>
+      </div>
+
+      <div className="field-stack">
+        <label htmlFor="stockStatus">{dictionary.common.stockStatus}</label>
+        <select id="stockStatus" name="stockStatus" defaultValue="ACTIVE">
+          {Object.entries(assetStockStatusLabels).map(([key, value]) => (
+            <option key={key} value={key}>
+              {value[locale === "ZH_CN" ? "zh" : "en"]}
+            </option>
+          ))}
+        </select>
+        <p className="muted">{dictionary.assets.stockStatusHelp}</p>
+      </div>
+
+      <div className="field-stack">
+        <label htmlFor="sizeType">{dictionary.common.sizeType}</label>
+        <select id="sizeType" name="sizeType" defaultValue="MEDIUM">
+          {Object.entries(assetSizeTypeLabels).map(([key, value]) => (
+            <option key={key} value={key}>
+              {value[locale === "ZH_CN" ? "zh" : "en"]}
+            </option>
+          ))}
+        </select>
+        <p className="muted">{dictionary.assets.sizeTypeHelp}</p>
+      </div>
 
       {showQuantityInMain ? (
         <AssortedQuantityFields
@@ -274,6 +300,13 @@ export function AssetCreateForm({
           helpText={dictionary.assets.assortedHelp}
           defaultQuantity={1}
         />
+      ) : null}
+
+      {showSizeInMain ? (
+        <div className="field-stack">
+          <label htmlFor="size">{dictionary.common.size}</label>
+          <input id="size" name="size" list="sizeSuggestions" />
+        </div>
       ) : null}
 
       <AssetTemplateSuggestions
@@ -413,20 +446,6 @@ export function AssetCreateForm({
               ))}
             </select>
           </div>
-
-          {!showUsageStateInMain ? (
-            <div className="field-stack">
-              <label htmlFor="usageState">{dictionary.common.usageState}</label>
-              <select id="usageState" name="usageState" defaultValue="">
-                <option value="">{dictionary.common.optional}</option>
-                {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value[locale === "ZH_CN" ? "zh" : "en"]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
 
           {!showQuantityInMain ? (
             <AssortedQuantityFields

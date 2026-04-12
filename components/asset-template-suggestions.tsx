@@ -17,6 +17,9 @@ type AssetTemplate = {
   subvariant: string | null;
   subvariantZh: string | null;
   size: string | null;
+  usageFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "RARE" | null;
+  stockStatus: "ACTIVE" | "BACKUP" | null;
+  sizeType: "SMALL" | "MEDIUM" | "BULKY" | null;
   barcodeValue: string | null;
   barcodeFormat: string | null;
   barcodeSource: string | null;
@@ -222,6 +225,9 @@ export function AssetTemplateSuggestions({
     setControlValue("subvariant", template.subvariant);
     setControlValue("subvariantZh", template.subvariantZh);
     setControlValue("size", template.size);
+    setControlValue("usageFrequency", template.usageFrequency);
+    setControlValue("stockStatus", template.stockStatus);
+    setControlValue("sizeType", template.sizeType);
     setControlValue("barcodeFormat", template.barcodeFormat);
     setControlValue("barcodeSource", template.barcodeSource);
     setControlValue("lengthValue", template.lengthValue);
@@ -231,7 +237,6 @@ export function AssetTemplateSuggestions({
     setControlValue("netWeightValue", template.netWeightValue);
     setControlValue("netWeightUnit", template.netWeightUnit);
     setControlValue("trackingMode", template.trackingMode);
-    setControlValue("usageState", template.usageState);
     setControlValue("quantity", template.quantity);
     setControlValue("sensitivityLevel", template.sensitivityLevel);
     setCheckboxValue("isAssorted", template.isAssorted);

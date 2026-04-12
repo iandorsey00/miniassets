@@ -9,7 +9,9 @@ import { AssetTemplateSuggestions } from "@/components/asset-template-suggestion
 import { BilingualFieldsScope } from "@/components/bilingual-fields-scope";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import {
-  assetUsageStateLabels,
+  assetSizeTypeLabels,
+  assetStockStatusLabels,
+  assetUsageFrequencyLabels,
   capacityUnitLabels,
   capacityUnitValues,
   commonColorLabels,
@@ -53,6 +55,9 @@ type EditableAsset = {
   subvariant: string | null;
   subvariantZh: string | null;
   size: string | null;
+  usageFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "RARE";
+  stockStatus: "ACTIVE" | "BACKUP";
+  sizeType: "SMALL" | "MEDIUM" | "BULKY";
   barcodeValue: string | null;
   barcodeFormat: string | null;
   barcodeSource: string | null;
@@ -87,6 +92,9 @@ type AssetTemplate = {
   subvariant: string | null;
   subvariantZh: string | null;
   size: string | null;
+  usageFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | "RARE" | null;
+  stockStatus: "ACTIVE" | "BACKUP" | null;
+  sizeType: "SMALL" | "MEDIUM" | "BULKY" | null;
   barcodeValue: string | null;
   barcodeFormat: string | null;
   barcodeSource: string | null;
@@ -144,7 +152,6 @@ export function AssetEditForm({
   const showBarcodeInMain = view === "STANDARD";
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
-  const showUsageStateInMain = view === "STANDARD";
   const showQuantityInMain = view === "STANDARD" || view === "CLOTHES";
   const showSizeInMain = view === "CLOTHES";
 
@@ -322,19 +329,41 @@ export function AssetEditForm({
           </div>
         ) : null}
 
-        {showUsageStateInMain ? (
-          <div className="field-stack">
-            <label htmlFor="usageState">{dictionary.common.usageState}</label>
-            <select id="usageState" name="usageState" defaultValue={asset.usageState ?? ""}>
-              <option value="">{dictionary.common.optional}</option>
-              {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value[locale === "ZH_CN" ? "zh" : "en"]}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
+        <div className="field-stack">
+          <label htmlFor="usageFrequency">{dictionary.common.usageFrequency}</label>
+          <select id="usageFrequency" name="usageFrequency" defaultValue={asset.usageFrequency}>
+            {Object.entries(assetUsageFrequencyLabels).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value[locale === "ZH_CN" ? "zh" : "en"]}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{dictionary.assets.usageFrequencyHelp}</p>
+        </div>
+
+        <div className="field-stack">
+          <label htmlFor="stockStatus">{dictionary.common.stockStatus}</label>
+          <select id="stockStatus" name="stockStatus" defaultValue={asset.stockStatus}>
+            {Object.entries(assetStockStatusLabels).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value[locale === "ZH_CN" ? "zh" : "en"]}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{dictionary.assets.stockStatusHelp}</p>
+        </div>
+
+        <div className="field-stack">
+          <label htmlFor="sizeType">{dictionary.common.sizeType}</label>
+          <select id="sizeType" name="sizeType" defaultValue={asset.sizeType}>
+            {Object.entries(assetSizeTypeLabels).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value[locale === "ZH_CN" ? "zh" : "en"]}
+              </option>
+            ))}
+          </select>
+          <p className="muted">{dictionary.assets.sizeTypeHelp}</p>
+        </div>
 
         {showQuantityInMain ? (
           <AssortedQuantityFields
@@ -345,6 +374,13 @@ export function AssetEditForm({
             defaultAssorted={asset.isAssorted}
             defaultQuantity={asset.quantity}
           />
+        ) : null}
+
+        {showSizeInMain ? (
+          <div className="field-stack">
+            <label htmlFor="size">{dictionary.common.size}</label>
+            <input id="size" name="size" list="sizeSuggestions" defaultValue={asset.size ?? ""} />
+          </div>
         ) : null}
 
         <AssetTemplateSuggestions
@@ -488,20 +524,6 @@ export function AssetEditForm({
                 ))}
               </select>
             </div>
-
-            {!showUsageStateInMain ? (
-              <div className="field-stack">
-                <label htmlFor="usageState">{dictionary.common.usageState}</label>
-                <select id="usageState" name="usageState" defaultValue={asset.usageState ?? ""}>
-                  <option value="">{dictionary.common.optional}</option>
-                  {Object.entries(assetUsageStateLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value[locale === "ZH_CN" ? "zh" : "en"]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
 
             {!showQuantityInMain ? (
               <AssortedQuantityFields

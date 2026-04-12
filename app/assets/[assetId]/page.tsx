@@ -5,8 +5,11 @@ import { AssetShareActions } from "@/components/asset-share-actions";
 import { Badge, EmptyState, PageHeader, Panel, StatusNotice } from "@/components/ui";
 import { deleteAssetAction, duplicateAssetAction, moveAssetAction, updateAssetAction } from "@/lib/actions";
 import {
+  assetSizeTypeLabels,
   assetStatusLabels,
+  assetStockStatusLabels,
   assetUsageStateLabels,
+  assetUsageFrequencyLabels,
   capacityUnitLabels,
   lengthUnitLabels,
   lengthUnitValues,
@@ -57,6 +60,9 @@ export default async function AssetDetailPage({
     `${data.dictionary.common.chineseName}: ${data.asset.nameZh || "-"}`,
     `${data.dictionary.common.location}: ${shareLocationPath}`,
     `${data.dictionary.common.locationCode}: ${data.asset.currentLocation?.locationCode || "-"}`,
+    `${data.dictionary.common.usageFrequency}: ${assetUsageFrequencyLabels[data.asset.usageFrequency][data.locale === "ZH_CN" ? "zh" : "en"]}`,
+    `${data.dictionary.common.stockStatus}: ${assetStockStatusLabels[data.asset.stockStatus][data.locale === "ZH_CN" ? "zh" : "en"]}`,
+    `${data.dictionary.common.sizeType}: ${assetSizeTypeLabels[data.asset.sizeType][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.trackingMode}: ${trackingModeLabels[data.asset.trackingMode][data.locale === "ZH_CN" ? "zh" : "en"]}`,
     `${data.dictionary.common.usageState}: ${data.asset.usageState ? assetUsageStateLabels[data.asset.usageState][data.locale === "ZH_CN" ? "zh" : "en"] : "-"}`,
     `${data.dictionary.common.lowStock}: ${data.asset.isLowStock ? data.dictionary.common.yes : data.dictionary.common.no}`,
@@ -126,6 +132,18 @@ export default async function AssetDetailPage({
                 label={sensitivityLabels[data.asset.sensitivityLevel][data.locale === "ZH_CN" ? "zh" : "en"]}
                 tone="neutral"
               />
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.usageFrequency}</span>
+              <span>{assetUsageFrequencyLabels[data.asset.usageFrequency][data.locale === "ZH_CN" ? "zh" : "en"]}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.stockStatus}</span>
+              <span>{assetStockStatusLabels[data.asset.stockStatus][data.locale === "ZH_CN" ? "zh" : "en"]}</span>
+            </div>
+            <div className="split-line">
+              <span>{data.dictionary.common.sizeType}</span>
+              <span>{assetSizeTypeLabels[data.asset.sizeType][data.locale === "ZH_CN" ? "zh" : "en"]}</span>
             </div>
             <div className="split-line">
               <span>{data.dictionary.common.trackingMode}</span>

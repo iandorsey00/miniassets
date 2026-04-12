@@ -81,6 +81,24 @@ enum AssetUsageState {
   IN_USE
 }
 
+enum AssetUsageFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  RARE
+}
+
+enum AssetStockStatus {
+  ACTIVE
+  BACKUP
+}
+
+enum AssetSizeType {
+  SMALL
+  MEDIUM
+  BULKY
+}
+
 enum AssetStatus {
   ACTIVE
   MISSING
@@ -216,6 +234,9 @@ model Asset {
   quantity          Int              @default(1)
   isAssorted        Boolean          @default(false)
   trackingMode      TrackingMode     @default(INDIVIDUAL)
+  usageFrequency    AssetUsageFrequency @default(WEEKLY)
+  stockStatus       AssetStockStatus    @default(ACTIVE)
+  sizeType          AssetSizeType       @default(MEDIUM)
   usageState        AssetUsageState?
   isLowStock        Boolean          @default(false)
   sensitivityLevel  SensitivityLevel @default(LOW)

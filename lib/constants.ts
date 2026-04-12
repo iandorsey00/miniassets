@@ -181,6 +181,24 @@ export const assetUsageStateLabels = {
   IN_USE: { zh: "使用中", en: "In use" },
 } as const;
 
+export const assetUsageFrequencyLabels = {
+  DAILY: { zh: "每天", en: "Daily" },
+  WEEKLY: { zh: "每周", en: "Weekly" },
+  MONTHLY: { zh: "每月", en: "Monthly" },
+  RARE: { zh: "很少", en: "Rare" },
+} as const;
+
+export const assetStockStatusLabels = {
+  ACTIVE: { zh: "在用", en: "Active" },
+  BACKUP: { zh: "备用", en: "Backup" },
+} as const;
+
+export const assetSizeTypeLabels = {
+  SMALL: { zh: "小件", en: "Small" },
+  MEDIUM: { zh: "中等", en: "Medium" },
+  BULKY: { zh: "笨重", en: "Bulky" },
+} as const;
+
 export const capacityUnitValues = ["ML", "L"] as const;
 export const capacityUnitLabels = {
   ML: { zh: "毫升", en: "mL" },
