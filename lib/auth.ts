@@ -31,7 +31,7 @@ export const getCurrentUser = cache(async () => {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(getMiniAuthLoginUrl(AUTH_ROUTES.postLogin));
+    redirect(`/auth/login?returnPath=${encodeURIComponent(AUTH_ROUTES.postLogin)}`);
   }
   return user;
 }
