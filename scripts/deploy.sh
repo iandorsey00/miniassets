@@ -111,6 +111,9 @@ fi
 log "Building app"
 npm run build
 
+log "Backfilling structural location codes"
+node --experimental-strip-types scripts/backfill-structural-location-codes.ts
+
 log "Restarting systemd service: $SERVICE_NAME"
 sudo systemctl restart "$SERVICE_NAME"
 sudo systemctl --no-pager --full status "$SERVICE_NAME"
