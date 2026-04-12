@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { getMiniAuthLogoutUrl, requireUser, revokeMiniAuthSession } from "@/lib/auth";
+import { requireUser, revokeMiniAuthSession } from "@/lib/auth";
 import {
   getAllowedLocationKinds,
   isLocationKindAllowedUnderParent,
@@ -465,11 +465,7 @@ export async function switchWorkspaceAction(formData: FormData) {
 
 export async function logoutAction() {
   await revokeMiniAuthSession();
-  const logoutUrl = getMiniAuthLogoutUrl("/login");
-  if (logoutUrl) {
-    redirect(logoutUrl);
-  }
-  redirect("/login");
+  redirect(`/auth/logout?returnPath=${encodeURIComponent("/login")}`);
 }
 
 export async function createLocationAction(formData: FormData) {
