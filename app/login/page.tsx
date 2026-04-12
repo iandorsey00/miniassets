@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AUTH_ROUTES } from "@/lib/auth-config";
 import { getMiniAuthLoginUrl } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
           <div className="stack">
             <h2>{dictionary.login.title}</h2>
             <p className="muted">{dictionary.login.body}</p>
-            <Link href={getMiniAuthLoginUrl()} className="button">
+            <Link href={getMiniAuthLoginUrl(AUTH_ROUTES.postLogin)} className="button">
               {dictionary.login.action}
             </Link>
           </div>
