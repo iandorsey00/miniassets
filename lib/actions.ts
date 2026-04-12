@@ -804,7 +804,12 @@ export async function addLocationDescriptorAction(formData: FormData) {
   });
 
   revalidateWorkspaceViews();
-  redirect("/locations");
+  const nextParams = new URLSearchParams();
+  nextParams.set("workspaceId", parsed.workspaceId);
+  nextParams.set("saved", "1");
+  nextParams.set("expanded", parsed.locationId);
+  nextParams.set("editor", parsed.locationId);
+  redirect(`/locations?${nextParams.toString()}`);
 }
 
 export async function deleteLocationDescriptorAction(formData: FormData) {
