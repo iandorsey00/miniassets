@@ -111,18 +111,25 @@ function formatLocationSegmentLabel<
   },
 >(node: T, locale: "ZH_CN" | "EN") {
   const localizedName = pickLocalizedText(locale, node);
+  const kindLabel = node.kind && locationKindLabels[node.kind]
+    ? locationKindLabels[node.kind][locale === "ZH_CN" ? "zh" : "en"]
+    : "";
+  const normalizedCode = node.code?.trim() || "";
+
+  if (localizedName && normalizedCode && kindLabel && localizedName === kindLabel) {
+    return `${kindLabel} ${normalizedCode}`;
+  }
+
   if (localizedName) {
     return localizedName;
   }
 
-  const normalizedCode = node.code?.trim() || "";
-  if (normalizedCode && node.kind && locationKindLabels[node.kind]) {
-    const kindLabel = locationKindLabels[node.kind][locale === "ZH_CN" ? "zh" : "en"];
+  if (normalizedCode && kindLabel) {
     return `${kindLabel} ${normalizedCode}`;
   }
 
-  if (node.kind && locationKindLabels[node.kind]) {
-    return locationKindLabels[node.kind][locale === "ZH_CN" ? "zh" : "en"];
+  if (kindLabel) {
+    return kindLabel;
   }
 
   return normalizedCode || node.id;
