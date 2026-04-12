@@ -465,7 +465,7 @@ export async function switchWorkspaceAction(formData: FormData) {
 
 export async function logoutAction() {
   await revokeMiniAuthSession();
-  redirect(`/auth/logout?returnPath=${encodeURIComponent("/login")}`);
+  redirect("/login");
 }
 
 export async function createLocationAction(formData: FormData) {
