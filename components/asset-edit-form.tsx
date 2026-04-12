@@ -27,8 +27,11 @@ import {
 } from "@/lib/constants";
 
 type AssetCreateView = "STANDARD" | "CLOTHES";
+type CommonColorValue = (typeof commonColorValues)[number];
 
 type SuggestionData = {
+  primaryColors: string[];
+  secondaryColors: string[];
   brands: string[];
   brandsZh: string[];
   models: string[];
@@ -149,6 +152,19 @@ export function AssetEditForm({
     window.localStorage.setItem("miniassets:asset-edit-view", view);
   }, [view]);
 
+  const orderedPrimaryColors: CommonColorValue[] = [
+    ...assetFieldSuggestions.primaryColors.filter(
+      (value): value is CommonColorValue => commonColorValues.includes(value as CommonColorValue),
+    ),
+    ...commonColorValues.filter((value) => !assetFieldSuggestions.primaryColors.includes(value)),
+  ];
+  const orderedSecondaryColors: CommonColorValue[] = [
+    ...assetFieldSuggestions.secondaryColors.filter(
+      (value): value is CommonColorValue => commonColorValues.includes(value as CommonColorValue),
+    ),
+    ...commonColorValues.filter((value) => !assetFieldSuggestions.secondaryColors.includes(value)),
+  ];
+
   const showBarcodeInMain = view === "STANDARD";
   const showCapacityInMain = view === "STANDARD";
   const showWeightInMain = view === "STANDARD";
@@ -232,7 +248,7 @@ export function AssetEditForm({
               (asset.primaryColor ?? asset.color) ? (
                 <option value={asset.primaryColor ?? asset.color ?? ""}>{asset.primaryColor ?? asset.color}</option>
               ) : null}
-              {commonColorValues.map((value) => (
+              {orderedPrimaryColors.map((value) => (
                 <option key={`primary-${value}`} value={value}>
                   {commonColorLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
                 </option>
@@ -248,7 +264,7 @@ export function AssetEditForm({
               asset.secondaryColor ? (
                 <option value={asset.secondaryColor}>{asset.secondaryColor}</option>
               ) : null}
-              {commonColorValues.map((value) => (
+              {orderedSecondaryColors.map((value) => (
                 <option key={`secondary-${value}`} value={value}>
                   {commonColorLabels[value][locale === "ZH_CN" ? "zh" : "en"]}
                 </option>

@@ -195,6 +195,30 @@ function uniqueSorted(values: Array<string | null | undefined>) {
   return [...new Set(normalized)];
 }
 
+function sortByUsageFrequency(values: Array<string | null | undefined>) {
+  const counts = new Map<string, number>();
+
+  for (const value of values) {
+    const normalized = normalizeSuggestionValue(value);
+    if (!normalized) {
+      continue;
+    }
+
+    counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort((left, right) => {
+      const countDelta = right[1] - left[1];
+      if (countDelta !== 0) {
+        return countDelta;
+      }
+
+      return left[0].localeCompare(right[0], "en", { sensitivity: "base" });
+    })
+    .map(([value]) => value);
+}
+
 async function getAssetFieldSuggestions(workspaceId: string) {
   const assets = await prisma.asset.findMany({
     where: { workspaceId },
@@ -218,8 +242,8 @@ async function getAssetFieldSuggestions(workspaceId: string) {
   });
 
   return {
-    primaryColors: uniqueSorted(assets.flatMap((asset) => [asset.primaryColor, asset.color])),
-    secondaryColors: uniqueSorted(assets.map((asset) => asset.secondaryColor)),
+    primaryColors: sortByUsageFrequency(assets.flatMap((asset) => [asset.primaryColor, asset.color])),
+    secondaryColors: sortByUsageFrequency(assets.map((asset) => asset.secondaryColor)),
     brands: uniqueSorted(assets.map((asset) => asset.brand)),
     brandsZh: uniqueSorted(assets.map((asset) => asset.brandZh)),
     models: uniqueSorted(assets.map((asset) => asset.model)),
