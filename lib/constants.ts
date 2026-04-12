@@ -91,7 +91,7 @@ export const locationChildKindMap = {
   DRAWER: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
   SHELF: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
   CONTAINER: ["CONTAINER", "ROW", "COLUMN", "POSITION"],
-  ROW: ["COLUMN", "POSITION"],
+  ROW: ["CABINET", "DRAWER", "COLUMN", "POSITION"],
   COLUMN: ["POSITION"],
   POSITION: [],
 } as const satisfies Record<string, readonly string[]>;
