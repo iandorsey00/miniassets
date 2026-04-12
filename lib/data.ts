@@ -121,6 +121,10 @@ function formatLocationSegmentLabel<
     return `${kindLabel} ${normalizedCode}`;
   }
 
+  if (node.kind && locationKindLabels[node.kind]) {
+    return locationKindLabels[node.kind][locale === "ZH_CN" ? "zh" : "en"];
+  }
+
   return normalizedCode || node.id;
 }
 

@@ -79,7 +79,7 @@ export const locationKindLabels: Record<
 
 export const topLevelLocationKinds = ["HOUSE"] as const;
 
-export const numericCodeLocationKinds = ["CABINET", "DRAWER", "ROW", "COLUMN"] as const;
+export const numericCodeLocationKinds = ["CABINET", "DRAWER", "SHELF", "CONTAINER", "ROW", "COLUMN"] as const;
 
 export const locationChildKindMap = {
   ROOT: ["HOUSE"],

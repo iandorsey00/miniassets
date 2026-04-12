@@ -21,6 +21,7 @@ import { pickLocalizedText } from "@/lib/present";
 import { BilingualNameFields } from "@/components/bilingual-name-fields";
 import { LocationCreateForm } from "@/components/location-create-form";
 import { LocationMoveForm } from "@/components/location-move-form";
+import { LocationNumberedChildrenForm } from "@/components/location-numbered-children-form";
 import { PageHeader, Panel, StatusNotice } from "@/components/ui";
 
 const wallSortOrder = {
@@ -378,6 +379,40 @@ export default async function LocationsPage({
             }}
           />
         </Panel>
+
+        <div className="full-span">
+          <Panel title={data.dictionary.locations.createNumberedTitle}>
+            <LocationNumberedChildrenForm
+              workspaceId={data.currentWorkspace?.id ?? ""}
+              locale={data.locale}
+              defaultParentId={params.parentId}
+              defaultKind={params.kind as LocationKind | undefined}
+              dictionary={{
+                common: {
+                  create: data.dictionary.common.create,
+                },
+                locations: {
+                  numberedParent: data.dictionary.locations.numberedParent,
+                  numberedType: data.dictionary.locations.numberedType,
+                  numberedCount: data.dictionary.locations.numberedCount,
+                  numberedHelp: data.dictionary.locations.numberedHelp,
+                  createNumbered: data.dictionary.locations.createNumbered,
+                  topLevel: data.dictionary.locations.topLevel,
+                  typeGroupStructure: data.dictionary.locations.typeGroupStructure,
+                  typeGroupStorage: data.dictionary.locations.typeGroupStorage,
+                  typeGroupCoordinates: data.dictionary.locations.typeGroupCoordinates,
+                  pickerPlaceholder: data.dictionary.locations.pickerPlaceholder,
+                  pickerHelp: data.dictionary.locations.pickerHelp,
+                  pickerMatched: data.dictionary.locations.pickerMatched,
+                  pickerUnresolved: data.dictionary.locations.pickerUnresolved,
+                  pickerAdvanced: data.dictionary.locations.pickerAdvanced,
+                  pickerLocationId: data.dictionary.locations.pickerLocationId,
+                },
+              }}
+              locations={locationOptions}
+            />
+          </Panel>
+        </div>
 
         <div className="full-span">
           <Panel title={data.dictionary.locations.title}>

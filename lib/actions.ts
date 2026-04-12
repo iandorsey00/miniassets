@@ -44,6 +44,13 @@ const createLocationSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+const createNumberedLocationChildrenSchema = z.object({
+  workspaceId: z.string().min(1),
+  parentId: z.string().min(1),
+  kind: z.enum(locationNodeTypeValues),
+  count: z.coerce.number().int().min(1).max(9),
+});
+
 const moveLocationSchema = z.object({
   workspaceId: z.string().min(1),
   locationId: z.string().min(1),
@@ -525,6 +532,61 @@ export async function createLocationAction(formData: FormData) {
     nextParams.set("parentId", parsed.parentId);
   }
 
+  nextParams.set("kind", parsed.kind);
+  redirect(`/locations?${nextParams.toString()}`);
+}
+
+export async function createNumberedLocationChildrenAction(formData: FormData) {
+  const parsed = createNumberedLocationChildrenSchema.parse({
+    workspaceId: formData.get("workspaceId"),
+    parentId: formData.get("parentId"),
+    kind: formData.get("kind"),
+    count: formData.get("count"),
+  });
+
+  const context = await getViewerContext(parsed.workspaceId);
+  if (!context.accessibleWorkspaceIds.includes(parsed.workspaceId)) {
+    throw new Error("Workspace access denied.");
+  }
+
+  const parent = await prisma.locationNode.findUnique({
+    where: { id: parsed.parentId },
+    select: { id: true, workspaceId: true, kind: true },
+  });
+
+  if (!parent || parent.workspaceId !== parsed.workspaceId) {
+    throw new Error("Parent location not found.");
+  }
+
+  validateLocationKindAndCode(parent.kind, parsed.kind, undefined);
+  if (!isNumericCodeLocationKind(parsed.kind)) {
+    throw new Error("That location type does not support automatic numbered child creation.");
+  }
+
+  for (let index = 0; index < parsed.count; index += 1) {
+    const structuralCode = await generateStructuralLocationCode({
+      workspaceId: parsed.workspaceId,
+      parentId: parsed.parentId,
+      kind: parsed.kind,
+    });
+
+    await prisma.locationNode.create({
+      data: {
+        workspaceId: parsed.workspaceId,
+        parentId: parsed.parentId,
+        kind: parsed.kind,
+        locationCode: await generateNextLocationCode(prisma, parsed.workspaceId),
+        code: structuralCode,
+        sortOrder: 0,
+      },
+    });
+  }
+
+  revalidateWorkspaceViews();
+  const nextParams = new URLSearchParams();
+  nextParams.set("workspaceId", parsed.workspaceId);
+  nextParams.set("saved", "1");
+  nextParams.set("parentId", parsed.parentId);
   nextParams.set("kind", parsed.kind);
   redirect(`/locations?${nextParams.toString()}`);
 }
