@@ -1,13 +1,15 @@
 # Deploy
 
-This document describes a repeatable single-droplet deployment path for MiniAssets without embedding private hostnames, usernames, or secret values in the repo.
+This document describes a repeatable reference deployment path for MiniAssets without embedding hostnames, usernames, or secret values in the repo.
 
-## Production shape
+It documents the current recommended operational shape, not the only valid deployment model.
+
+## Reference production shape
 
 - one Node.js process running `next start`
 - one reverse proxy in front of the app
 - one SQLite database file on the server
-- MiniAuth as the shared identity source
+- a shared-auth service as the identity source
 - systemd managing the app process
 
 ## Required server inputs
@@ -20,7 +22,7 @@ Prepare these values outside the repo:
 - service port
 - non-root app user and group
 - absolute path to the Node.js bin directory
-- MiniAuth base URL and MiniAuth database path
+- shared-auth base URL and shared-auth database path
 
 ## Recommended layout
 
@@ -41,7 +43,7 @@ Prepare these values outside the repo:
 8. Optionally run `npm run db:seed` only for a non-production trial instance.
 9. Install and enable the systemd unit.
 10. Install and reload the Caddy config.
-11. Verify [health route](/Users/iandorsey/dev/miniassets/app/api/health/route.ts), MiniAuth login redirect, and end-to-end asset access.
+11. Verify [health route](/Users/iandorsey/dev/miniassets/app/api/health/route.ts), authentication redirect behavior, and end-to-end asset access.
 
 ## Standard deploy flow
 
@@ -56,10 +58,10 @@ The script expects a server-local deploy env file and will:
 - apply the schema
 - build the app
 - restart the systemd service
-- automatically restore droplet-local `package.json` and `package-lock.json` drift before pull
+- automatically restore server-local `package.json` and `package-lock.json` drift before pull
 - automatically run a final health check if `APP_URL` or `HEALTHCHECK_URL` is set
 
-Recommended production usage:
+Example production usage:
 
 ```bash
 cd /var/www/miniassets/app
@@ -89,8 +91,8 @@ Confirm:
 - the Caddy reload succeeded
 - `GET /api/health` returns `{"ok":true,"service":"miniassets"}`
 - `GET /robots.txt` returns a full-site disallow policy
-- MiniAuth sign-in returns to MiniAssets successfully
-- an existing user with MiniAuth app access can load `/dashboard`
+- sign-in returns to MiniAssets successfully
+- an existing user with app access can load `/dashboard`
 
 ## Rollback
 

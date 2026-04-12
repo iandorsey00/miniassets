@@ -17,11 +17,11 @@ Use this checklist for MiniAssets releases.
 3. run `npm run build`
 4. deploy with `bash scripts/deploy.sh`
 5. verify `/api/health`
-6. verify MiniAuth sign-in flow
+6. verify sign-in flow
 7. verify dashboard, assets, locations, and export routes
 
 ## After release
 
 - confirm `robots.txt` still disallows the full site
-- confirm the current production domain resolves to the droplet
-- confirm Caddy is serving the expected site instead of a default welcome page
+- confirm the current production domain resolves to the intended server
+- confirm the reverse proxy is serving the expected site instead of a default welcome page

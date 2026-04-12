@@ -10,9 +10,9 @@ This document captures the current security posture for MiniAssets.
 
 ## Current safeguards
 
-- authentication is delegated to MiniAuth
-- app access is gated by MiniAuth `AppAccess`
-- workspace truth is synced from MiniAuth when enabled
+- authentication is delegated to the shared-auth service
+- app access is gated by shared-auth `AppAccess`
+- workspace truth is synced from the shared-auth service when enabled
 - the app serves `robots.txt` with full-site disallow
 - page metadata disables indexing and caching
 - the app uses server-side rendering for authenticated views
@@ -25,7 +25,7 @@ This document captures the current security posture for MiniAssets.
 - back up the database before schema-changing releases
 - use HTTPS at the reverse proxy
 - run the app as a non-root user
-- keep MiniAuth and MiniAssets on the same trusted parent domain only when shared cookie behavior is intended
+- keep the auth service and MiniAssets on the same trusted parent domain only when shared cookie behavior is intended
 
 ## Remaining limits
 

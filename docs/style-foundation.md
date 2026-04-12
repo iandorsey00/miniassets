@@ -13,6 +13,6 @@ MiniAssets uses `app/minitickets-foundation.css` as its family baseline.
 
 For consistency across family apps, the footer line should use:
 
-`MiniAssets © {year} Ian Dorsey · Open source under the MIT License`
+`MiniAssets © {year} · Open source under the MIT License`
 
 If this wording changes in one sibling app, it should be reviewed as a family-wide convention rather than a one-off local tweak.

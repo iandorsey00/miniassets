@@ -1,10 +1,10 @@
 # MiniAssets
 
-Bilingual household asset management for low-to-medium secrecy items, built around a standardized location tree and MiniAuth-backed access.
+Bilingual household asset management for low-to-medium secrecy items, built around a standardized location tree and shared-auth access.
 
 ## Current scope
 
-- MiniAuth authentication and shared workspace sync
+- Shared-auth authentication and shared workspace sync
 - Shared locale, theme, and accent inheritance
 - Standardized household location tree
 - Location reparenting for correcting branch placement mistakes
@@ -27,6 +27,5 @@ Bilingual household asset management for low-to-medium secrecy items, built arou
 - Barcode enrichment is intentionally optional. There is no universal product database for all household goods.
 - The recommended AI pattern is export-first: let `MiniAssets` stay operationally simple, then hand structured JSON to outside AI tools.
 - The shared visual baseline lives in `app/minitickets-foundation.css`, with MiniAssets-specific additions layered in `app/globals.css`.
-- Footer copy follows the family convention: `MiniAssets © {year} Ian Dorsey · Open source under the MIT License`.
 - Generalized cataloging and placement standards live in [docs/asset-data-standards.md](/Users/iandorsey/dev/miniassets/docs/asset-data-standards.md).
 - Production deploys should use [scripts/deploy.sh](/Users/iandorsey/dev/miniassets/scripts/deploy.sh) rather than ad hoc shell history.
