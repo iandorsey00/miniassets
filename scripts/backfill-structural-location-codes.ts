@@ -1,6 +1,6 @@
-import { PrismaClient, type LocationNodeType } from "@prisma/client";
+import type { LocationNodeType } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.ts";
 
 const STRUCTURAL_KINDS: LocationNodeType[] = [
   "CABINET",
