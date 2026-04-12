@@ -276,8 +276,6 @@ export default async function AssetDetailPage({
                 help: data.dictionary.assets.locationPickerHelp,
                 matched: data.dictionary.assets.locationPickerMatched,
                 unresolved: data.dictionary.assets.locationPickerUnresolved,
-                advanced: data.dictionary.assets.locationPickerAdvanced,
-                locationId: data.dictionary.assets.locationPickerLocationId,
                 status: data.dictionary.common.status,
                 confidence: data.dictionary.common.confidence,
                 notes: data.dictionary.common.notes,

@@ -104,6 +104,8 @@ function compareLocations(
 function renderTree(
   parentId: string | null,
   data: Awaited<ReturnType<typeof getLocationsData>>,
+  expandedLocationIds: Set<string>,
+  openEditorLocationId: string | null,
 ): React.ReactNode {
   const nodes = data.locations
     .filter((location) => location.parentId === parentId)
@@ -121,7 +123,7 @@ function renderTree(
         const numericCode = isNumericCodeLocationKind(location.kind);
 
         return (
-          <details key={location.id} className="tree-node">
+          <details key={location.id} className="tree-node" open={expandedLocationIds.has(location.id)}>
             <summary className="tree-node-summary">
               <div className="tree-node-header">
                 <div className="tree-node-copy">
@@ -154,7 +156,7 @@ function renderTree(
                 </div>
               ) : null}
 
-              <details className="location-editor">
+              <details className="location-editor" open={openEditorLocationId === location.id}>
                 <summary className="location-editor-summary">{data.dictionary.locations.editLocation}</summary>
 
                 <form action={updateLocationAction} className="form-grid location-editor-form">
@@ -285,7 +287,7 @@ function renderTree(
                 </div>
               </details>
 
-              <div className="tree-children">{renderTree(location.id, data)}</div>
+              <div className="tree-children">{renderTree(location.id, data, expandedLocationIds, openEditorLocationId)}</div>
             </div>
           </details>
         );
@@ -297,10 +299,30 @@ function renderTree(
 export default async function LocationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ workspaceId?: string; parentId?: string; kind?: string; saved?: string }>;
+  searchParams: Promise<{
+    workspaceId?: string;
+    parentId?: string;
+    kind?: string;
+    saved?: string;
+    expanded?: string;
+    editor?: string;
+  }>;
 }) {
   const params = await searchParams;
   const data = await getLocationsData(params.workspaceId);
+  const expandedLocationIds = new Set<string>();
+  const expandedLocationId = params.expanded ?? null;
+  const openEditorLocationId = params.editor ?? null;
+
+  if (expandedLocationId) {
+    const byId = new Map(data.locations.map((location) => [location.id, location]));
+    let current = byId.get(expandedLocationId) ?? null;
+    while (current) {
+      expandedLocationIds.add(current.id);
+      current = current.parentId ? byId.get(current.parentId) ?? null : null;
+    }
+  }
+
   const locationOptions = data.locations.map((location) => ({
     id: location.id,
     kind: location.kind,
@@ -348,8 +370,6 @@ export default async function LocationsPage({
                 pickerHelp: data.dictionary.locations.pickerHelp,
                 pickerMatched: data.dictionary.locations.pickerMatched,
                 pickerUnresolved: data.dictionary.locations.pickerUnresolved,
-                pickerAdvanced: data.dictionary.locations.pickerAdvanced,
-                pickerLocationId: data.dictionary.locations.pickerLocationId,
               },
             }}
             locations={locationOptions}
@@ -374,8 +394,6 @@ export default async function LocationsPage({
               help: data.dictionary.locations.pickerHelp,
               matched: data.dictionary.locations.pickerMatched,
               unresolved: data.dictionary.locations.pickerUnresolved,
-              advanced: data.dictionary.locations.pickerAdvanced,
-              locationId: data.dictionary.locations.pickerLocationId,
             }}
           />
         </Panel>
@@ -405,8 +423,6 @@ export default async function LocationsPage({
                   pickerHelp: data.dictionary.locations.pickerHelp,
                   pickerMatched: data.dictionary.locations.pickerMatched,
                   pickerUnresolved: data.dictionary.locations.pickerUnresolved,
-                  pickerAdvanced: data.dictionary.locations.pickerAdvanced,
-                  pickerLocationId: data.dictionary.locations.pickerLocationId,
                 },
               }}
               locations={locationOptions}
@@ -418,7 +434,7 @@ export default async function LocationsPage({
           <Panel title={data.dictionary.locations.title}>
             <p className="muted">{data.dictionary.locations.standardHint}</p>
             <p className="muted">{data.dictionary.locations.autoCodeHint}</p>
-            {renderTree(null, data)}
+            {renderTree(null, data, expandedLocationIds, openEditorLocationId)}
           </Panel>
         </div>
       </div>

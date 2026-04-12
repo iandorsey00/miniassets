@@ -25,8 +25,6 @@ type AssetLocationFieldProps = {
     help: string;
     matched: string;
     unresolved: string;
-    advanced: string;
-    locationId: string;
   };
 };
 
@@ -58,7 +56,6 @@ export function AssetLocationField({
   labels,
 }: AssetLocationFieldProps) {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const advancedInputRef = useRef<HTMLInputElement | null>(null);
   const optionById = useMemo(() => new Map(options.map((option) => [option.id, option])), [options]);
 
   const lookupMap = useMemo(() => {
@@ -103,8 +100,6 @@ export function AssetLocationField({
     return "";
   });
   const [locationId, setLocationId] = useState(defaultLocationId ?? "");
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [advancedId, setAdvancedId] = useState(defaultLocationId ?? "");
   const [recentLocationIds, setRecentLocationIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -114,25 +109,15 @@ export function AssetLocationField({
 
     const savedQuery = window.localStorage.getItem(`${storageKey}:query`);
     const savedLocationId = window.localStorage.getItem(`${storageKey}:locationId`);
-    const savedAdvancedId = window.localStorage.getItem(`${storageKey}:advancedId`);
-    const savedAdvancedOpen = window.localStorage.getItem(`${storageKey}:advancedOpen`);
     const savedRecentIds = window.localStorage.getItem(`${storageKey}:recentLocationIds`);
 
     const restoreTimer = window.setTimeout(() => {
-      if (typeof savedAdvancedOpen === "string") {
-        setAdvancedOpen(savedAdvancedOpen === "1");
-      }
-
       if (savedQuery !== null) {
         setQuery(savedQuery);
       }
 
       if (savedLocationId !== null) {
         setLocationId(savedLocationId);
-      }
-
-      if (savedAdvancedId !== null) {
-        setAdvancedId(savedAdvancedId);
       }
 
       if (savedRecentIds) {
@@ -155,10 +140,8 @@ export function AssetLocationField({
 
     window.localStorage.setItem(`${storageKey}:query`, query);
     window.localStorage.setItem(`${storageKey}:locationId`, locationId);
-    window.localStorage.setItem(`${storageKey}:advancedId`, advancedId);
-    window.localStorage.setItem(`${storageKey}:advancedOpen`, advancedOpen ? "1" : "0");
     window.localStorage.setItem(`${storageKey}:recentLocationIds`, JSON.stringify(recentLocationIds.slice(0, 8)));
-  }, [advancedId, advancedOpen, locationId, query, recentLocationIds, storageKey]);
+  }, [locationId, query, recentLocationIds, storageKey]);
 
   function resolveLocationId(rawValue: string) {
     const normalized = normalizeLookupValue(rawValue);
@@ -189,7 +172,6 @@ export function AssetLocationField({
 
   function selectOption(option: AssetLocationOption) {
     setLocationId(option.id);
-    setAdvancedId(option.id);
     setQuery(option.path);
     setRecentLocationIds((current) => [option.id, ...current.filter((id) => id !== option.id)].slice(0, 8));
   }
@@ -229,9 +211,6 @@ export function AssetLocationField({
           const nextLocationId = resolveLocationId(nextQuery);
           setQuery(nextQuery);
           setLocationId(nextLocationId);
-          if (nextLocationId) {
-            setAdvancedId(nextLocationId);
-          }
         }}
       />
 
@@ -281,39 +260,6 @@ export function AssetLocationField({
         </p>
       ) : null}
       {unresolved ? <p className="muted">{labels.unresolved}</p> : null}
-
-      <details
-        className="location-picker-advanced"
-        open={advancedOpen}
-        onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
-      >
-        <summary>{labels.advanced}</summary>
-        <div className="field-stack">
-          <label htmlFor={`${inputId}-advanced`}>{labels.locationId}</label>
-          <input
-            id={`${inputId}-advanced`}
-            ref={advancedInputRef}
-            value={advancedId}
-            onFocus={() => moveCaretToEnd(advancedInputRef.current)}
-            onChange={(event) => {
-              const nextId = event.target.value.trim();
-              setAdvancedId(nextId);
-
-              if (!nextId) {
-                setLocationId("");
-                setQuery("");
-                return;
-              }
-
-              const nextOption = optionById.get(nextId);
-              setLocationId(nextOption?.id ?? "");
-              if (nextOption) {
-                selectOption(nextOption);
-              }
-            }}
-          />
-        </div>
-      </details>
     </div>
   );
 }

@@ -151,8 +151,6 @@ export function AssetCreateForm({
           help: dictionary.assets.locationPickerHelp,
           matched: dictionary.assets.locationPickerMatched,
           unresolved: dictionary.assets.locationPickerUnresolved,
-          advanced: dictionary.assets.locationPickerAdvanced,
-          locationId: dictionary.assets.locationPickerLocationId,
         }}
       />
 

@@ -19,8 +19,6 @@ export function LocationMoveForm({
     help: string;
     matched: string;
     unresolved: string;
-    advanced: string;
-    locationId: string;
   };
   options: AssetLocationOption[];
 }) {
@@ -40,8 +38,6 @@ export function LocationMoveForm({
           help: labels.help,
           matched: labels.matched,
           unresolved: labels.unresolved,
-          advanced: labels.advanced,
-          locationId: labels.locationId,
         }}
       />
 
@@ -57,8 +53,6 @@ export function LocationMoveForm({
           help: labels.help,
           matched: labels.matched,
           unresolved: labels.unresolved,
-          advanced: labels.advanced,
-          locationId: labels.locationId,
         }}
       />
 

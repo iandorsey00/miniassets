@@ -36,8 +36,6 @@ export function AssetMoveForm({
     help: string;
     matched: string;
     unresolved: string;
-    advanced: string;
-    locationId: string;
     status: string;
     confidence: string;
     notes: string;
@@ -74,8 +72,6 @@ export function AssetMoveForm({
           help: labels.help,
           matched: labels.matched,
           unresolved: labels.unresolved,
-          advanced: labels.advanced,
-          locationId: labels.locationId,
         }}
       />
 

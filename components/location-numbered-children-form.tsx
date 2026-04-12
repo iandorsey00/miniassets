@@ -42,8 +42,6 @@ type LocationNumberedChildrenFormProps = {
       pickerHelp: string;
       pickerMatched: string;
       pickerUnresolved: string;
-      pickerAdvanced: string;
-      pickerLocationId: string;
     };
   };
   locations: LocationOption[];
@@ -116,8 +114,6 @@ export function LocationNumberedChildrenForm({
               help: dictionary.locations.pickerHelp,
               matched: dictionary.locations.pickerMatched,
               unresolved: dictionary.locations.pickerUnresolved,
-              advanced: dictionary.locations.pickerAdvanced,
-              locationId: dictionary.locations.pickerLocationId,
             }}
           />
 
